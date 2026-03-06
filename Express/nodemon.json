@@ -1,0 +1,5 @@
+{
+    "watch": ["routes", "controllers", "app.js", "common", "package.json", "views", "public", "config"], 
+    "ext": "js", 
+    "exec": "npm run start" 
+  }
