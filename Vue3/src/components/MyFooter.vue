@@ -2,22 +2,55 @@
   <div class="footer">
     <div class="footer-main">
       <div class="footer-main-l">
-        <div class="footer-main-l-l">
-          <a href="javascript:;">Suxin ·</a>
+        <div v-if="footerTitle" class="footer-main-l-l">
+          <a href="javascript:;">{{ footerTitle }}</a>
         </div>
-        <div style="color: #888888">
-          <p>© 2022 - 也许，将会是最好用的博客管理系统！</p>
-          <p>Perhaps, it will be the best blog management system!</p>
+        <div class="footer-main-l-content" style="color: #888888">
+          <template v-if="footerContent">
+            <p v-for="(line, i) in footerContentLines" :key="i">{{ line }}</p>
+          </template>
+          <template v-else>
+            <p>© 2022 - 也许，将会是最好用的博客管理系统！</p>
+            <p>Perhaps, it will be the best blog management system!</p>
+          </template>
         </div>
       </div>
-      <div class="footer-main-r">
-        <a href="">蜀ICP备2022022757</a>
+      <div v-if="footerIcp" class="footer-main-r">
+        <a href="javascript:;">{{ footerIcp }}</a>
       </div>
     </div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { getOtherswitch } from "@/api/api";
+
+const footerTitle = ref("");
+const footerContent = ref("");
+const footerIcp = ref("");
+
+const footerContentLines = computed(() => {
+  const s = (footerContent.value || "").trim();
+  if (!s) return [];
+  return s.split(/\r?\n/).filter(Boolean);
+});
+
+onMounted(async () => {
+  try {
+    const res = await getOtherswitch();
+    const list = res?.data || [];
+    const byName = (name) => list.find((i) => i.name === name);
+    footerTitle.value = (byName("footer_title")?.content || "").trim();
+    footerContent.value = (byName("footer_content")?.content || "").trim();
+    footerIcp.value = (byName("footer_icp")?.content || "").trim();
+  } catch (_) {
+    footerTitle.value = "";
+    footerContent.value = "";
+    footerIcp.value = "";
+  }
+});
+</script>
 
 <style lang="less" scoped>
 .footer {

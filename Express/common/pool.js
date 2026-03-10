@@ -1,11 +1,14 @@
-// const mysql = require('mysql2');
 const mysql = require('mysql2/promise');
-
-const configObj = require('./config')
+const configObj = require('./config');
 
 const pool = mysql.createPool({
-  ...configObj
-})
+  ...configObj,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+});
 
 
 // 获取连接并执行操作

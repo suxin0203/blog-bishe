@@ -1,67 +1,179 @@
 <template>
-  <div class="header" id="top" :class="{ headercolor: isActive }">
-    <div class="nav-new" :class="{ headermohu: isMohu }">
+  <div class="header" id="top" :class="{ headercolor: isActive, headermohu: isMohu, headertransparent: isTransparent }">
+    <div class="nav-new">
       <div class="nav-new-l">
-        <div class="logo" @click="toHome">
-          <img :src="logo" alt="logo" />
-        </div>
-        <div class="nav-new-l-menu">
-          <div class="nav-new-title" @click="toHome">
-            <a href="javascript:;" class="mune-css">首页</a>
-          </div>
-          <div class="nav-new-title" @click="toArticle">
-            <a href="javascript:;" class="mune-css">文章</a>
-          </div>
-          <div class="nav-new-title">
-            <n-popselect
-              :value="category_id"
-              :options="options"
-              trigger="click"
-              @update:value="searchCategory"
+        <a href="#/" class="logo" @click.prevent="onNavClick($event, { route: '/' })">
+          <img :src="siteLogoUrl || logo" :alt="siteName || 'LOGO'" />
+        </a>
+        <nav class="nav-menu">
+          <template v-for="item in MAIN_NAV" :key="item.label">
+            <a v-if="item.external" :href="item.external" target="_blank" rel="noopener" class="nav-item">
+              <span class="nav-link">{{ item.label }}</span>
+            </a>
+            <a
+              v-else
+              :href="hashHref(item)"
+              class="nav-item"
+              :class="{ 'nav-item-active': isNavActive(item) }"
+              @click="onNavClick($event, item)"
             >
-              <a class="mune-css"> 分类 </a>
-            </n-popselect>
-          </div>
-          <div class="nav-new-title" @click="toMessage">
-            <a href="javascript:;" class="mune-css">留言</a>
-          </div>
-          <div class="nav-new-title" @click="toAboutMe">
-            <a href="javascript:;" class="mune-css">关于我</a>
-          </div>
-        </div>
+              <span class="nav-link">{{ item.label }}</span>
+            </a>
+          </template>
+        </nav>
       </div>
       <div class="nav-new-r">
-        <div class="nav-new-r-search">
-          <n-input-group>
-            <n-input
-              :value="keyword"
-              @input="$emit('update:keyword', $event)"
-              @keydown.enter="emit('updateKeyword', keyword)"
-              placeholder="请输入关键字"
-              class="nav-new-r-search-input"
-              style="background-color: rgba(255, 255, 255, 0.5)"
+        <div class="nav-search">
+          <n-input
+            :value="keyword"
+            @input="$emit('update:keyword', $event)"
+            @keydown.enter="emit('updateKeyword', keyword)"
+            placeholder="搜索文章..."
+            clearable
+            class="nav-search-input"
+          />
+          <n-button type="primary" quaternary class="nav-search-btn" @click="emit('updateKeyword', keyword)">
+            搜索
+          </n-button>
+        </div>
+        <div v-if="adminStore.token" class="nav-back">
+          <n-tag v-if="adminStore.title" size="small" type="info" round class="nav-title-tag">{{ adminStore.title }}</n-tag>
+          <n-button v-if="adminStore.is_root || adminStore.role === 'editor'" type="primary" quaternary size="small" @click="goDashboard" class="nav-back-btn">
+            进入后台
+          </n-button>
+          <n-dropdown trigger="click" :options="avatarMenuOptions" @select="handleAvatarMenu">
+            <n-avatar
+              round
+              :size="32"
+              :src="adminStore.avatar_url || defaultAvatarUrl || 'https://api.suxin23.cn/upload/avatar.png'"
+              class="nav-avatar"
             />
-            <n-button
-              type="primary"
-              @click="emit('updateKeyword', keyword)"
-              class="nav-new-r-search-button"
-            >
-              搜索
-            </n-button>
-          </n-input-group>
+          </n-dropdown>
+        </div>
+        <div v-else class="nav-back">
+          <n-button type="primary" size="small" @click="goLogin" class="nav-login-btn">登录</n-button>
         </div>
       </div>
     </div>
+    <n-modal v-model:show="showProfileModal" preset="card" title="编辑资料" style="width: 400px" :mask-closable="false">
+      <n-form label-placement="top">
+        <n-form-item label="昵称">
+          <n-input v-model:value="profileForm.nickname" placeholder="显示名称" maxlength="20" show-count />
+        </n-form-item>
+        <n-form-item label="头像链接">
+          <n-input v-model:value="profileForm.avatar_url" placeholder="图片 URL" clearable />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <n-space justify="end">
+          <n-button @click="showProfileModal = false">取消</n-button>
+          <n-button type="primary" :loading="profileSaving" @click="saveProfile">保存</n-button>
+        </n-space>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
-import { router, routes } from "@/common/router.js";
-
-// const logo = require("@/assets/images/logo3.png");
+import { ref, watch, computed, inject, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { MAIN_NAV } from "@/common/mainNav.js";
+import { AdminStore } from "@/stores/AdminStore";
+import { updateUserInfo, getOtherswitch } from "@/api/api";
 import logo from "@/assets/images/logo3.png";
 
+const message = inject("message");
+const adminStore = AdminStore();
+const route = useRoute();
+const router = useRouter();
+
+const siteName = ref("");
+const siteLogoUrl = ref("");
+const defaultAvatarUrl = ref("");
+onMounted(async () => {
+  try {
+    const res = await getOtherswitch();
+    const list = res?.data || [];
+    const byName = (name) => list.find((i) => i.name === name);
+    siteName.value = (byName("site_name")?.content || "").trim();
+    siteLogoUrl.value = (byName("site_logo_url")?.content || "").trim();
+    defaultAvatarUrl.value = (byName("default_avatar_url")?.content || "").trim() || "https://api.suxin23.cn/upload/avatar.png";
+  } catch (_) {
+    defaultAvatarUrl.value = "https://api.suxin23.cn/upload/avatar.png";
+  }
+});
+
+const showProfileModal = ref(false);
+const profileSaving = ref(false);
+const profileForm = ref({ nickname: "", avatar_url: "" });
+
+const avatarMenuOptions = computed(() => {
+  const opts = [{ label: "编辑资料", key: "profile" }];
+  opts.push({ label: "兑换记录", key: "orders" });
+  opts.push({ label: "积分记录", key: "pointsLog" });
+  if (adminStore.is_root || adminStore.role === "editor") {
+    opts.push({ label: "进入后台", key: "dashboard" });
+  }
+  opts.push({ label: "退出", key: "logout" });
+  return opts;
+});
+
+const handleAvatarMenu = (key) => {
+  if (key === "profile") {
+    profileForm.value = {
+      nickname: adminStore.nickname || "",
+      avatar_url: adminStore.avatar_url || "",
+    };
+    showProfileModal.value = true;
+  } else if (key === "orders") {
+    router.push("/my-orders");
+  } else if (key === "pointsLog") {
+    router.push("/my-points-log");
+  } else if (key === "dashboard") {
+    goDashboard();
+  } else if (key === "logout") {
+    adminStore.delToken();
+  }
+};
+
+const saveProfile = async () => {
+  const nickname = (profileForm.value.nickname || "").trim();
+  const avatar_url = (profileForm.value.avatar_url || "").trim() || null;
+  profileSaving.value = true;
+  try {
+    const res = await updateUserInfo(adminStore.id, { nickname, avatar_url });
+    if (res?.code === 200) {
+      message.success("保存成功");
+      adminStore.setNickname(nickname || adminStore.username);
+      adminStore.setAvatarUrl(avatar_url || "");
+      showProfileModal.value = false;
+    } else {
+      message.error(res?.message || "保存失败");
+    }
+  } catch (e) {
+    message.error(e?.message || e?.data?.message || "保存失败");
+  }
+  profileSaving.value = false;
+};
+
+const hashHref = (item) => {
+  const path = item.route || "/";
+  return "#" + (path.startsWith("/") ? path : "/" + path);
+};
+
+const isNavActive = (item) => {
+  const path = item.route || "/";
+  return route.path === path;
+};
+
+const onNavClick = (e, item) => {
+  if (item.external) return;
+  const path = item.route || "/";
+  e.preventDefault();
+  if (route.path === path) return;
+  const hash = "#" + (path.startsWith("/") ? path : "/" + path);
+  window.location.hash = hash;
+};
 const props = defineProps({
   options: {
     type: Array,
@@ -89,12 +201,13 @@ const emit = defineEmits([
 ]);
 const isActive = ref(false);
 const isMohu = ref(false);
+const isTransparent = ref(false);
 
 const getScrollPosition = () => {
-  let top = document.documentElement.scrollTop || document.body.scrollTop;
-  isActive.value = top > 50;
+  const top = document.documentElement.scrollTop || document.body.scrollTop;
+  isTransparent.value = props.setstyle && top <= 50;
   isMohu.value = top > 450;
-  isActive.value = isActive.value && !isMohu.value;
+  isActive.value = top > 50 && !isMohu.value;
 };
 
 const setupScrollListener = () => {
@@ -104,216 +217,197 @@ const setupScrollListener = () => {
 watch(
   () => props.setstyle,
   (newValue) => {
-    newValue ? setupScrollListener() : "";
+    if (newValue) {
+      setupScrollListener();
+      getScrollPosition();
+    } else {
+      isTransparent.value = false;
+    }
   },
   { immediate: true }
 );
 
-const search = () => {
-  getArtiles(1);
+const goDashboard = () => {
+  router.push("/dashboard");
 };
 
-// onMounted(() => {
-//   setupScrollListener();
-// });
-
-//搜索分类
-const searchCategory = (category_id) => {
-  emit("updateCategory", category_id);
-};
-
-const toAboutMe = (blog) => {
-  // router.push("/aboutme"); //跳转到关于我
-  // 新标签的打开suxin0203的github
-  window.open("https://github.com/suxin0203");
-};
-
-const toMessage = (blog) => {
-  router.push("/leavemessage"); //跳转到留言
-};
-
-const toHome = (blog) => {
-  router.push("/"); //跳转到首页
-};
-
-const toArticle = (blog) => {
-  router.push("/articles"); //跳转到首页
+const goLogin = () => {
+  router.push("/login");
 };
 </script>
 
 <style lang="less" scoped>
 .header {
   position: sticky;
-  top: 0px;
+  top: 0;
   width: 100%;
-  box-shadow: 0.5px 0.5px 5px #888888;
   z-index: 99;
-}
-.headercolor {
-  background-color: #fff;
-  a {
-    color: gray !important;
+  background: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+  .nav-search-input {
+    background: #f5f5f5;
+  }
+  .nav-back-btn {
+    color: #18a058;
+  }
+  &.headertransparent {
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: saturate(120%) blur(8px);
+    border-bottom-color: rgba(0, 0, 0, 0.04);
+    box-shadow: none;
+  }
+  &.headermohu {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: saturate(180%) blur(10px);
+    border-bottom-color: transparent;
   }
 }
 
-.headermohu {
-  // background-color: #fff;
-  background-image: radial-gradient(transparent 1px, #ffffff 1px);
-  background-size: 4px 4px;
-  backdrop-filter: saturate(50%) blur(4px);
-  a {
-    color: gray !important;
-  }
-}
 .nav-new {
-  height: 80px;
-  width: 1200px;
+  height: 64px;
+  max-width: 1200px;
   padding: 0 20px;
-  display: flex;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 20px;
+}
 
-  &-title :hover {
-    color: #fff !important;
-  }
+.nav-new-l {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex: 1;
+  min-width: 0;
+}
 
-  &-title {
-    user-select: none; /* CSS3属性 */
-    a {
-      position: relative;
-      z-index: 1;
-    }
-
-    a::before {
-      content: "";
-      position: absolute;
-      z-index: -1;
-      top: 0;
-      bottom: 0;
-      left: -0.25em;
-      right: -0.25em;
-      background-color: #36ad6a;
-      transform-origin: center right;
-      transform: scaleX(0);
-      transition: transform 0.2s ease-in-out;
-    }
-
-    a:hover::before {
-      transform: scaleX(1);
-      transform-origin: center left;
-    }
-  }
-  &-l {
-    height: 80px;
-    display: flex;
-    width: 65%;
-    &-menu {
-      // width: 280px;
-      width: 360px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      a {
-        line-height: 70px;
-        font-size: 20px;
-        font-weight: bold;
-        color: #fff;
-      }
-    }
-  }
-
-  .logo {
-    height: 80px;
-    display: flex;
-    align-items: center;
-
-    user-select: none; /* CSS3属性 */
-    img {
-      height: 40px;
-      width: auto;
-      background-color: gray;
-      border-radius: 4px;
-    }
-  }
-
-  &-r {
-    // background-color: greenyellow;
-    height: 80px;
-    display: flex;
-    justify-content: right;
-    align-items: center;
-    width: 40%;
-    &-search {
-      width: 100%;
-      height: 80px;
-      display: flex;
-      align-items: center;
-    }
+.logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  color: inherit;
+  img {
+    height: 32px;
+    width: auto;
+    border-radius: 6px;
+    object-fit: contain;
   }
 }
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-item {
+  user-select: none;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  &.nav-item-active .nav-link {
+    color: #18a058;
+    background: rgba(24, 160, 88, 0.12);
+  }
+  .nav-link {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .nav-link:hover {
+    color: #18a058;
+    background: rgba(24, 160, 88, 0.08);
+  }
+}
+
+.nav-new-r {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 240px;
+  .nav-search-input {
+    flex: 1;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .nav-search-btn {
+    flex-shrink: 0;
+  }
+}
+
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  .nav-title-tag {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .nav-back-btn {
+    font-weight: 500;
+  }
+  .nav-avatar {
+    cursor: pointer;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    transition: transform 0.2s;
+  }
+  .nav-avatar:hover {
+    transform: scale(1.06);
+  }
+}
+
 @media screen and (max-width: 1250px) {
-  .nav-new {
-    width: 90vw;
-  }
+  .nav-new { max-width: 90vw; }
 }
-@media screen and (max-width: 820px) {
-  .nav-new {
-    width: 95vw;
-  }
-}
-@media screen and (max-width: 600px) {
-  html,
-  body {
-    display: flex;
-    width: 100vw;
-  }
 
-  .header {
-    height: 120px;
-    width: 100vw;
-    background-color: #fff;
-  }
+@media screen and (max-width: 900px) {
+  .nav-menu { display: none; }
+  .nav-search { max-width: 180px; }
+}
+
+@media screen and (max-width: 600px) {
+  .header { min-height: 52px; }
   .nav-new {
-    padding: 0px;
-    height: 120px;
-    display: block;
-    width: 100vw;
-  }
-  .nav-new-l {
-    width: 96vw;
-    padding: 0 2vw;
-    height: 60px;
-    display: flex;
-    &-menu {
-      // width: 250px;
-      flex: 1;
-      a {
-        line-height: 60px;
-        font-size: 18px;
-        color: #888888;
-      }
-    }
-  }
-  .nav-new-l .logo {
-    height: 60px;
-    // margin-left: 10px;
+    height: 52px;
+    padding: 0 12px;
+    max-width: 100%;
   }
   .nav-new-r {
-    width: 100vw;
-    height: 60px;
-    // 透明背景
-    // background-color: rgba(255, 255, 255, 0.5);
-    &-search {
-      width: 95vw;
-      margin: 0 auto;
-      height: 60px;
-      display: flex;
-      align-items: center;
-    }
+    gap: 8px;
   }
-
-  .title-h1-page {
-    display: none;
+  .nav-search { max-width: 120px; }
+  .nav-back .nav-title-tag { display: none; }
+  .nav-back .nav-back-btn { display: none; }
+  .nav-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
   }
 }
 </style>

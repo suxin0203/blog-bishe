@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const friendslinkcontroller = require('../controllers/friendslink');
+const friendslinkController = require('../controllers/friendslinkController');
 
-console.log('----------------');
-/* GET categorys listing. */
-router.get('/', friendslinkcontroller.getAllFriendsLinks);
-router.post('/token/', friendslinkcontroller.createFriendsLink);
-router.put('/token/:id', friendslinkcontroller.updateFriendsLink);
-router.delete('/token/:id', friendslinkcontroller.deleteFriendsLink);
+router.get('/', friendslinkController.getAllFriendsLinks);
+router.post('/token/', friendslinkController.createFriendsLink);
+router.put('/token/:link_id', friendslinkController.updateFriendsLink);
+router.delete('/token/:link_id', friendslinkController.deleteFriendsLink);
+
 module.exports = router;

@@ -32,22 +32,31 @@ app.provide("dialog", dialog);
 app.provide("notification", notification);
 app.provide("server_url", axios.defaults.baseURL);
 
+app.use(createPinia());
 app.use(router);
 app.use(naive);
-app.use(createPinia());
 
 console.log(app);
 
 
 import { AdminStore } from "@/stores/AdminStore";
 const adminStore = AdminStore();
-// 初始化应用时检查本地存储中是否有token
+// 初始化应用时检查本地存储中是否有 token
 if (localStorage.getItem('token')) {
-  // 将用户信息加载到状态管理器中
-  // console.log('初始化应用时检查本地存储中是否有token');
   adminStore.getAdminInfo();
-
 }
+// 初始化时根据已缓存的 globalOptions 应用黑白灰主题（避免刷新后主题丢失）
+try {
+  const cached = localStorage.getItem('globalOptions');
+  if (cached) {
+    const list = JSON.parse(cached);
+    const themeRow = list.find((item) => item.name === 'darkthem' || item.name === 'darktheme');
+    const isDark = themeRow && Number(themeRow.value) === 1;
+    const htmlEl = document.documentElement;
+    if (isDark) htmlEl.classList.add('darklight');
+    else htmlEl.classList.remove('darklight');
+  }
+} catch (_) {}
 
 
 

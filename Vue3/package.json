@@ -13,6 +13,7 @@
     "@wangeditor/editor-for-vue": "^5.1.12",
     "animate.css": "^4.1.1",
     "axios": "^0.27.2",
+    "crypto-js": "^4.2.0",
     "echarts": "^5.4.2",
     "echarts-wordcloud": "^2.1.0",
     "fake-progress": "^1.0.4",

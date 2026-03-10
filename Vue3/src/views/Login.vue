@@ -1,435 +1,451 @@
 <template>
-  <div class="bodyc">
-    <button type="button" class="button" @click="router.push('/')">
-      <span class="button__text">返 回</span>
-      <span class="button__icon"
-        ><svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke-linejoin="round"
-          stroke-linecap="round"
-          stroke="currentColor"
-          height="24"
-          fill="none"
-          class="svg"
-        >
-          <line x1="25" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-      </span>
-    </button>
+  <div class="login-page">
+    <a class="back-home" href="#/" @click.prevent="router.push('/')">
+      <span class="back-home-icon">←</span>
+      <span>返回首页</span>
+    </a>
     <div class="login-pane">
-      <div class="qiu"></div>
-      <n-card title="管理员登录">
-        <n-form :model="admin" :rules="rules" ref="formRef">
-          <n-form-item label="账号" path="username">
-            <n-input
-              v-model:value="admin.username"
-              placeholder="请输入账号"
-              @keyup.enter="login()"
-            />
-          </n-form-item>
-          <n-form-item label="密码" path="password">
-            <n-input
-              v-model:value="admin.password"
-              placeholder="请输入密码"
-              type="password"
-              @keyup.enter="login()"
-            />
-          </n-form-item>
-          <n-form-item label="验证码" path="countresult">
-            <n-input-group>
-              <n-input-group-label
-                style="background-color: transparent"
-                @click="marthCount()"
-              >
-                {{ num1 }} + {{ num2 }} =
-              </n-input-group-label>
-              <n-input
-                v-model:value="admin.countresult"
-                :style="{ width: '80%' }"
-                placeholder="请输入计算结果"
-                @keyup.enter="login()"
-              />
-            </n-input-group>
-          </n-form-item>
-        </n-form>
-        <template #footer>
-          <n-checkbox
-            v-model:checked="admin.remember"
-            label="记住我"
-            style="background-color: transparent; margin-bottom: 20px"
-          />
-          <n-space justify="space-around" size="large">
-            <n-button
-              type="primary"
-              @click="login"
-              class="loginbtn"
-              @keyup.enter="login()"
-            >
-              登录
-            </n-button>
-            <n-button
-              type="primary"
-              secondary
-              strong
-              @click="register"
-              class="loginbtn"
-            >
-              注册
-            </n-button>
-          </n-space>
-        </template>
-      </n-card>
-      <div class="qiu1"></div>
+      <div class="login-card-wrap">
+        <h1 class="login-title">文栈博客</h1>
+        <p class="login-subtitle">登录或注册以继续</p>
+        <n-card class="login-card" bordered>
+          <n-tabs type="line" size="large" v-model:value="activeTab" class="login-tabs">
+          <n-tab-pane name="login" tab="登录">
+            <n-form :model="admin" :rules="rules" ref="formRef" class="auth-form">
+              <n-form-item label="账号" path="username">
+                <n-input v-model:value="admin.username" placeholder="至少 4 个字符" @keyup.enter="login()" />
+              </n-form-item>
+              <n-form-item label="密码" path="password">
+                <n-input v-model:value="admin.password" placeholder="请输入密码" type="password" @keyup.enter="login()" />
+              </n-form-item>
+              <n-form-item label="验证码" path="countresult">
+                <n-input-group>
+                  <n-input-group-label style="background-color: transparent" @click="fetchCaptcha()">
+                    {{ num1 }} + {{ num2 }} =
+                  </n-input-group-label>
+                  <n-input v-model:value="admin.countresult" placeholder="计算结果" @keyup.enter="login()" />
+                </n-input-group>
+              </n-form-item>
+              <n-form-item>
+                <n-checkbox v-model:checked="admin.remember" label="记住我" />
+              </n-form-item>
+              <n-form-item>
+                <n-button type="primary" block strong @click="login" class="loginbtn">登 录</n-button>
+                <div class="forgot-wrap">
+                  <n-button text type="primary" tag="a" @click.prevent="showForgotModal = true">忘记密码？</n-button>
+                </div>
+              </n-form-item>
+            </n-form>
+          </n-tab-pane>
+          <n-tab-pane name="register" tab="注册">
+            <n-form :model="admin" :rules="rulesRegister" ref="formRefRegister" class="auth-form">
+              <n-form-item label="账号" path="username">
+                <n-input v-model:value="admin.username" placeholder="至少 4 个字符" @keyup.enter="register()" />
+              </n-form-item>
+              <n-form-item label="密码" path="password">
+                <n-input v-model:value="admin.password" placeholder="至少 4 个字符" type="password" @keyup.enter="register()" />
+              </n-form-item>
+              <n-form-item label="邮箱" path="email">
+                <n-input v-model:value="admin.email" placeholder="用于找回密码，请填写有效邮箱" type="text" @keyup.enter="register()" />
+              </n-form-item>
+              <n-form-item label="验证码" path="countresult">
+                <n-input-group>
+                  <n-input-group-label style="background-color: transparent" @click="fetchCaptcha()">
+                    {{ num1 }} + {{ num2 }} =
+                  </n-input-group-label>
+                  <n-input v-model:value="admin.countresult" placeholder="计算结果" @keyup.enter="register()" />
+                </n-input-group>
+              </n-form-item>
+              <n-form-item>
+                <n-button type="primary" block strong @click="register" class="loginbtn">注 册</n-button>
+              </n-form-item>
+            </n-form>
+          </n-tab-pane>
+        </n-tabs>
+        </n-card>
+      </div>
     </div>
+
+    <n-modal v-model:show="showForgotModal" preset="card" title="找回密码" style="width: 400px" :mask-closable="false">
+      <div v-if="forgotStep === 1" class="forgot-step">
+        <n-form-item label="用户名">
+          <n-input v-model:value="forgotForm.username" placeholder="请输入注册时的用户名" @keyup.enter="fetchMaskEmail" />
+        </n-form-item>
+        <n-button type="primary" block :loading="forgotLoading" @click="fetchMaskEmail">下一步：查看脱敏邮箱</n-button>
+        <p v-if="forgotMaskEmail" class="forgot-tip">您的邮箱为：<strong>{{ forgotMaskEmail }}</strong>，请在下一步填写完整邮箱以验证。</p>
+      </div>
+      <div v-else-if="forgotStep === 2" class="forgot-step">
+        <p class="forgot-tip">请填写完整邮箱（与注册时一致）</p>
+        <n-form-item label="完整邮箱">
+          <n-input v-model:value="forgotForm.email" type="text" placeholder="例如：your@example.com" @keyup.enter="doForgotVerify" />
+        </n-form-item>
+        <n-space>
+          <n-button @click="forgotStep = 1">上一步</n-button>
+          <n-button type="primary" :loading="forgotLoading" @click="doForgotVerify">验证邮箱</n-button>
+        </n-space>
+      </div>
+      <div v-else class="forgot-step">
+        <n-form-item label="新密码">
+          <n-input v-model:value="forgotForm.newPassword" type="password" placeholder="至少 4 个字符" />
+        </n-form-item>
+        <n-form-item label="确认密码">
+          <n-input v-model:value="forgotForm.confirmPassword" type="password" placeholder="再次输入新密码" />
+        </n-form-item>
+        <n-button type="primary" block :loading="forgotLoading" @click="doForgotReset">确认重置</n-button>
+      </div>
+    </n-modal>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, inject, onMounted } from "vue";
+import { reactive, ref, inject, onMounted, watch } from "vue";
 import { AdminStore } from "../stores/AdminStore";
 import { router, routes } from "@/common/router.js";
-import { userLogin, userRegister } from "../api/api";
+import { getCaptcha, userLogin, userRegister, getForgotEmail, forgotVerify, forgotReset } from "../api/api";
+import { base64Encode, captchaMd5 } from "@/utils/encode";
 
 const axios = inject("axios");
 const message = inject("message");
 const adminStore = AdminStore();
 
 const formRef = ref();
+const formRefRegister = ref();
+const activeTab = ref("login");
 
-let num1 = ref();
-let num2 = ref();
-let sum = ref();
+const showForgotModal = ref(false);
+const forgotStep = ref(1);
+const forgotLoading = ref(false);
+const forgotMaskEmail = ref("");
+const forgotForm = reactive({
+  username: "",
+  email: "",
+  newPassword: "",
+  confirmPassword: "",
+  resetToken: "",
+});
 
-// 获取用户保存的账号密码
-const { username, password, remember } = localStorage;
+const fetchMaskEmail = async () => {
+  const name = forgotForm.username.trim();
+  if (!name) {
+    message.warning("请输入用户名");
+    return;
+  }
+  forgotLoading.value = true;
+  try {
+    const res = await getForgotEmail(name);
+    if (res.code === 200 && res.data?.maskEmail) {
+      forgotMaskEmail.value = res.data.maskEmail;
+      forgotStep.value = 2;
+    } else {
+      message.error(res.message || "获取失败");
+    }
+  } catch (e) {
+    message.error(e?.response?.data?.message || e?.message || "请求失败");
+  }
+  forgotLoading.value = false;
+};
+
+watch(showForgotModal, (v) => {
+  if (v) {
+    forgotStep.value = 1;
+    forgotMaskEmail.value = "";
+    forgotForm.username = "";
+    forgotForm.email = "";
+    forgotForm.newPassword = "";
+    forgotForm.confirmPassword = "";
+    forgotForm.resetToken = "";
+  }
+});
+
+const doForgotVerify = async () => {
+  const email = forgotForm.email.trim();
+  if (!email) {
+    message.warning("请输入完整邮箱");
+    return;
+  }
+  forgotLoading.value = true;
+  try {
+    const res = await forgotVerify({ username: forgotForm.username.trim(), email });
+    if (res.code === 200 && res.data?.resetToken) {
+      forgotForm.resetToken = res.data.resetToken;
+      forgotStep.value = 3;
+    } else {
+      message.error(res.message || "验证失败");
+    }
+  } catch (e) {
+    message.error(e?.response?.data?.message || e?.message || "验证失败");
+  }
+  forgotLoading.value = false;
+};
+
+const doForgotReset = async () => {
+  const pw = forgotForm.newPassword;
+  const confirm = forgotForm.confirmPassword;
+  const pwTrim = pw ? String(pw).trim() : "";
+  if (pwTrim.length <= 5) {
+    message.warning("密码不能为空且须大于 5 个字符");
+    return;
+  }
+  if (pw !== confirm) {
+    message.warning("两次输入的密码不一致");
+    return;
+  }
+  forgotLoading.value = true;
+  try {
+    const res = await forgotReset({ resetToken: forgotForm.resetToken, newPassword: base64Encode(pwTrim) });
+    if (res.code === 200) {
+      message.success(res.message || "密码已重置");
+      showForgotModal.value = false;
+      forgotStep.value = 1;
+      forgotMaskEmail.value = "";
+      forgotForm.username = "";
+      forgotForm.email = "";
+      forgotForm.newPassword = "";
+      forgotForm.confirmPassword = "";
+      forgotForm.resetToken = "";
+    } else {
+      message.error(res.message || "重置失败");
+    }
+  } catch (e) {
+    message.error(e?.response?.data?.message || e?.message || "重置失败");
+  }
+  forgotLoading.value = false;
+};
+
+const captchaId = ref("");
+let num1 = ref(0);
+let num2 = ref(0);
+
 const admin = reactive({
-  username: username || "",
-  password: password ? atob(password) : "",
-  remember: !!remember || false,
+  username: localStorage.getItem("username") || "",
+  password: localStorage.getItem("password") ? atob(localStorage.getItem("password")) : "",
+  email: "",
+  remember: !!localStorage.getItem("remember") || false,
   countresult: "",
 });
 
-// 验证码逻辑
-const marthCount = () => {
+// 从后端获取验证码（点击刷新或首次加载）
+const fetchCaptcha = async () => {
   admin.countresult = "";
-  // 生成两个小于20的随机数并计算之和
-  num1.value = Math.floor(Math.random() * 20);
-  num2.value = Math.floor(Math.random() * 20);
-  sum.value = num1.value + num2.value;
+  try {
+    const res = await getCaptcha();
+    const data = res?.data ?? res;
+    if (data?.captchaId != null) {
+      captchaId.value = data.captchaId;
+      num1.value = data.num1 ?? 0;
+      num2.value = data.num2 ?? 0;
+    }
+  } catch (e) {
+    message?.error?.(e?.response?.data?.message || e?.message || "获取验证码失败");
+  }
 };
-// 页面加载时候执行一次
-marthCount();
+onMounted(() => fetchCaptcha());
 
 let rules = {
   username: [
     { required: true, message: "请输入账号", trigger: "blur" },
-    { min: 3, max: 12, message: "账号长度在 3 到 12 个字符", trigger: "blur" },
+    { min: 4, message: "账号至少 4 个字符", trigger: "blur" },
   ],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
-    { min: 6, max: 18, message: "密码长度在 6 到 18 个字符", trigger: "blur" },
+    { min: 4, message: "密码至少 4 个字符", trigger: "blur" },
+  ],
+  countresult: [{ required: true, message: "请输入验证码", trigger: "blur" }],
+};
+
+const rulesRegister = {
+  username: [
+    { required: true, message: "请输入账号", trigger: "blur" },
+    { min: 4, message: "账号至少 4 个字符", trigger: "blur" },
+  ],
+  password: [
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 4, message: "密码至少 4 个字符", trigger: "blur" },
+  ],
+  email: [
+    { required: true, message: "请填写邮箱，便于找回密码", trigger: "blur" },
+    { type: "email", message: "请输入有效邮箱地址", trigger: "blur" },
   ],
   countresult: [{ required: true, message: "请输入验证码", trigger: "blur" }],
 };
 
 const login = async (e) => {
-  // 校验表单
-  // e.preventDefault();
   formRef.value?.validate(async (errors) => {
-    let { username, password, remember, countresult } = admin;
-    if (!errors && countresult == sum.value) {
-      let res = await userLogin({
-        username,
-        password,
-      });
-      if (res.code == 200) {
-        router.push("/dashboard");
-        message.info(res.message + " -欢迎回来ovo");
-        // 将用户信息存储到本地存储
-        adminStore.setToken(res.token, res.data);
-        if (remember) {
-          localStorage.setItem("username", username);
-          localStorage.setItem("password", btoa(password));
-          localStorage.setItem("remember", 1);
-        } else {
-          localStorage.removeItem("username");
-          localStorage.removeItem("password");
-          localStorage.removeItem("remember");
-        }
+    if (errors) return;
+    const { username, password, remember, countresult } = admin;
+    const res = await userLogin({
+      username,
+      password: base64Encode(password),
+      captchaId: captchaId.value,
+      captchaAnswer: captchaMd5(countresult),
+    });
+    if (res.code == 200) {
+      adminStore.setToken(res.token, res.data);
+      if (res.refreshToken) localStorage.setItem("refreshToken", res.refreshToken);
+      message.info(res.message + " -欢迎回来ovo");
+      router.push("/dashboard");
+      if (remember) {
+        localStorage.setItem("username", username);
+        localStorage.setItem("password", btoa(password));
+        localStorage.setItem("remember", 1);
       } else {
-        message.error(res.message);
-        marthCount();
+        localStorage.removeItem("username");
+        localStorage.removeItem("password");
+        localStorage.removeItem("remember");
       }
     } else {
-      message.error("验证码错误");
-      marthCount();
+      message.error(res.message);
+      const msg = (res.message || "").toString();
+      if (msg.includes("验证码") || msg.includes("验证码已过期")) await fetchCaptcha();
     }
   });
 };
 
-const register = async (e) => {
-  let { username, password, countresult } = admin;
-  if (countresult == sum.value) {
-    let res = await userRegister({ username, password });
-    if (res.code == 200) {
-      message.info(res.data.username + res.message);
-      marthCount();
-    } else {
-      message.error(res.message);
-      marthCount();
+const register = async () => {
+  formRefRegister.value?.validate(async (errors) => {
+    if (errors) return;
+    const { username, password, email, countresult } = admin;
+    if (!email || !String(email).trim()) {
+      message.error("请填写邮箱，便于后续找回密码");
+      return;
     }
-  } else {
-    message.error("验证码错误");
-    marthCount();
-    return;
-  }
+    const res = await userRegister({
+      username,
+      password: base64Encode(password),
+      email: String(email).trim(),
+      captchaId: captchaId.value,
+      captchaAnswer: captchaMd5(countresult),
+    });
+    if (res.code == 200) {
+      message.success((res.data?.username ? res.data.username + " " : "") + (res.message || "注册成功，请登录"));
+      activeTab.value = "login";
+      admin.countresult = "";
+      await fetchCaptcha();
+    } else {
+      message.error(res.message || "注册失败");
+      const msg = (res.message || "").toString();
+      if (msg.includes("验证码") || msg.includes("验证码已过期")) await fetchCaptcha();
+    }
+  });
 };
 </script>
 
 <style lang="less" scoped>
-.bodyc {
-  /* 初始化 取消内外边距 */
+.login-page {
+  min-height: 100vh;
   margin: 0;
-  padding: 0;
-  /* 100%窗口高度 */
-  height: 100vh;
-  width: 100vw;
-  /* 渐变背景 */
-  background: linear-gradient(
-    125deg,
-    #2c3e50,
-    #27ae60,
-    #2980b9,
-    #e74c3c,
-    #8e44ad
-  );
-  /* 指定背景图像的大小 */
-  background-size: 500%;
-  /* 执行动画：动画名 时长 线性的 无限次播放 */
-  animation: bgAnimation 15s linear infinite;
-  // background: var(--baseColor);
-}
-.login-pane {
-  width: 100vw;
-  height: 100vh;
+  padding: 24px;
+  box-sizing: border-box;
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #334155 100%);
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  flex-direction: row;
 }
 
-.qiu {
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  margin-top: -230px;
-  margin-right: -180px;
-  background: linear-gradient(135deg, #ffb566, #ff6677);
-  z-index: 0;
-  animation: bounce-down 5s linear infinite;
-}
-.qiu1 {
-  width: 175px;
-  height: 175px;
-  border-radius: 50%;
-  margin-top: 225px;
-  margin-left: -90px;
-  background: linear-gradient(135deg, #de82ca, #259fac);
-  z-index: 0;
-  animation: bounce-down 8s linear infinite;
-}
-
-.n-card {
-  width: 400px;
-  height: 440px;
-  z-index: 999;
-  background-color: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 0.8px solid rgba(255, 255, 255, 0.18);
-  box-shadow: rgba(142, 142, 142, 0.19) 0px 6px 15px 0px;
-  -webkit-box-shadow: rgba(142, 142, 142, 0.19) 0px 6px 15px 0px;
-  border-radius: 12px;
-  -webkit-border-radius: 12px;
-  color: rgba(255, 255, 255, 0.75);
-}
-.n-input {
-  background-color: transparent;
-}
-:deep(.n-checkbox-box) {
-  background-color: transparent !important;
-}
-
-button {
-  z-index: 1;
-  position: relative;
-  font-size: inherit;
-  font-family: inherit;
-  color: white;
-  padding: 0.5em 1em;
-  outline: none;
-  border: none;
-  // background-color: hsl(236, 32%, 26%);
-  overflow: hidden;
-  transition: color 0.6s ease-in-out;
-}
-
-.loginbtn {
-  width: 140px;
-}
-
-.loginbtn::before {
-  content: "";
-  z-index: -1;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 1em;
-  height: 1em;
-  border-radius: 50%;
-  background-color: #3cefff;
-  transform-origin: center;
-  transform: translate3d(-50%, -50%, 0) scale3d(0, 0, 0);
-  transition: transform 0.7s ease-in-out;
-}
-
-.loginbtn:hover {
-  cursor: pointer;
-  color: #161616;
-}
-
-.loginbtn:hover::before {
-  transform: translate3d(-50%, -50%, 0) scale3d(30, 30, 30);
-}
-
-// .n-checkbox-box .n-checkbox {
-//   background-color: transparent!important;;
-// }
-
-// 拟态卡片
-// .n-card {
-//   border-radius: 50px;
-//   background: #e0e0e0;
-//   box-shadow: -20px -20px 60px #bebebe, 20px 20px 60px #ffffff;
-// }
-
-/* 定义动画 */
-@keyframes bgAnimation {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes bounce-down {
-  25% {
-    -webkit-transform: translateY(-20px);
-  }
-  50%,
-  100% {
-    -webkit-transform: translateY(0);
-  }
-
-  75% {
-    -webkit-transform: translateY(20px);
-  }
-}
-@media screen and (max-width: 600px) {
-  .n-card {
-    width: 90vw;
-  }
-  // 媒体查询当分辨率小于768px时候，n-card宽度为90vw
-  .qiu {
-    position: fixed;
-    width: 200px;
-    height: 200px;
-    right: 150px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ffb566, #ff6677);
-    z-index: 0;
-    animation: bounce-down 5s linear infinite;
-  }
-  .qiu1 {
-    position: fixed;
-    width: 175px;
-    height: 175px;
-    left: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #de82ca, #259fac);
-    z-index: 0;
-    animation: bounce-down 8s linear infinite;
-  }
-}
-
-//以下是退出按钮的样式
-.button {
-  position: relative;
-  width: 150px;
-  height: 40px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  border: 1px solid #34974d;
-  background-color: #3aa856;
-  border-radius: 15px;
-  // 固定定位
+.back-home {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  top: 20px;
+  left: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.2s, color 0.2s;
 }
-
-.button,
-.button__icon,
-.button__text {
-  transition: all 0.3s;
-}
-
-.button .button__text {
-  transform: translateX(30px);
+.back-home:hover {
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
+}
+.back-home-icon {
+  font-size: 18px;
   font-weight: 600;
 }
 
-.button .button__icon {
-  position: absolute;
-  transform: translateX(99px);
-  height: 100%;
-  width: 39px;
-  background-color: #34974d;
+.login-pane {
+  width: 100%;
+  max-width: 420px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
 }
 
-.button .svg {
-  width: 30px;
-  stroke: #fff;
+.login-card-wrap {
+  width: 100%;
 }
 
-.button:hover {
-  background: #34974d;
+.login-title {
+  margin: 0 0 4px 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 
-.button:hover .button__text {
-  color: transparent;
+.login-subtitle {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
 }
 
-.button:hover .button__icon {
-  width: 118px;
-  transform: translateX(0);
+.login-card {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  background: #fff;
+}
+.login-card :deep(.n-card__content) {
+  padding: 24px 20px 20px;
+}
+.login-tabs :deep(.n-tabs-nav) {
+  margin-bottom: 8px;
+}
+.login-tabs :deep(.n-tab-pane) {
+  padding: 0;
+}
+.auth-form {
+  margin-top: 4px;
+}
+.auth-form :deep(.n-form-item) {
+  margin-bottom: 18px;
+}
+.auth-form :deep(.n-form-item:last-of-type) {
+  margin-bottom: 0;
+}
+.forgot-wrap {
+  margin-top: 12px;
+  text-align: center;
+}
+.forgot-step .forgot-tip {
+  margin: 8px 0 12px 0;
+  font-size: 13px;
+  color: var(--n-text-color-3, #666);
+}
+.loginbtn {
+  width: 100%;
+  height: 44px;
+  font-weight: 600;
+  border-radius: 10px;
 }
 
-.button:active .button__icon {
-  background-color: #2e8644;
+@media screen and (max-width: 480px) {
+  .login-page {
+    padding: 16px;
+  }
+  .login-title {
+    font-size: 22px;
+  }
+  .login-card :deep(.n-card__content) {
+    padding: 20px 16px;
+  }
 }
 
 .button:active {

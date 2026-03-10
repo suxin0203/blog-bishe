@@ -1,12 +1,16 @@
-# 基于vue3+Naive UI的极简博客
+# 基于 Vue3 + Naive UI 的极简博客（文栈博客）
 
+- **预览地址**：[Suxin's blog](http://blog.suxin23.cn)
+- **预览接口**：[api接口](https://api.suxin23.cn)
 
+## 项目结构
 
-- ### 预览地址：~~http://162.14.73.22:7030~~ [Suxin's blog](http://blog.suxin23.cn)
+- **Express**：后端 Node.js（Express），提供 RESTful API。
+- **Vue3**：前端 Vue 3 + Vite + Naive UI。
+- **[docs/](docs/)**：项目文档（需求与开题、开发进度与代办），详见 [docs/README.md](docs/README.md)。
+- **[sql/](sql/)**：数据库脚本（建表、种子数据、迁移与可选脚本），详见 [sql/README.md](sql/README.md)。
 
-- ### 预览接口：~~http://162.14.73.22:7031~~ [api接口](https://api.suxin23.cn)
-
-## 后端是nodejs（express）
+## 后端（Node.js + Express）
 
 # blog-vue3 如何运行
 

@@ -1,16 +1,27 @@
 const pool = require('./pool');
 
-
-// 获取连接并执行操作
-async function runQuery(sql,values) {
-  const connection = await pool.getConnection();
+/** 执行查询，连接被重置时自动重试一次 */
+async function runQuery(sql, values) {
+  const run = async () => {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query(sql, values || []);
+      return rows;
+    } finally {
+      connection.release();
+    }
+  };
   try {
-    const [rows, fields] = await connection.query(sql,values);
-    return rows;
-  } catch (error) {
-    throw error;
-  } finally {
-    connection.release();
+    return await run();
+  } catch (err) {
+    if (err && (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ETIMEDOUT')) {
+      try {
+        return await run();
+      } catch (e) {
+        throw e;
+      }
+    }
+    throw err;
   }
 }
 

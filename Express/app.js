@@ -4,7 +4,8 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const jwt = require('jsonwebtoken');
-// 添加跨域模块
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 const cors = require('cors');
 const multer = require('multer');
 // 使用 multer 中间件处理文件上传
@@ -19,12 +20,19 @@ const update = multer({
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const categoryRouter = require('./routes/categories');
-const acrticleRouter = require('./routes/articles');
+const articleRouter = require('./routes/articles');
+const tagRouter = require('./routes/tags');
+const commentRouter = require('./routes/comments');
+const articleLikeRouter = require('./routes/articleLikes');
+const articleFavoriteRouter = require('./routes/articleFavorites');
 const messageRouter = require('./routes/messages');
 const otherswitchRouter = require('./routes/otherswitch');
 const wechatloginRouter = require('./routes/wechatlogin');
 const uploadJPGRouter = require('./routes/uploadJPG');
 const friendslinkRouter = require('./routes/friendslink');
+const swiperRouter = require('./routes/swiper');
+const pointsRouter = require('./routes/points');
+const dashboardRouter = require('./routes/dashboard');
 const utilsRouter = require('./routes/utils');
 const ActivityRouter = require('./routes/activity');
 
@@ -37,6 +45,19 @@ app.set('view engine', 'ejs');
 // 启用 CORS 中间件 并允许所有域名访问
 app.use(cors());
 
+// 时间戳防重放：请求头 X-Request-Time 为客户端时间戳（毫秒），与服务器时间差超过 30 秒则拒绝（仅当带该头时校验）
+app.use((req, res, next) => {
+  const clientTime = req.headers['x-request-time'];
+  if (clientTime !== undefined && clientTime !== '') {
+    const t = parseInt(String(clientTime), 10);
+    const now = Date.now();
+    if (Number.isNaN(t) || Math.abs(now - t) > 30000) {
+      return res.status(200).json({ code: 400, message: '请求已过期或时间偏差过大，请同步系统时间后重试', data: null });
+    }
+  }
+  next();
+});
+
 app.use(update.any())
 
 app.use(logger('dev'));
@@ -45,34 +66,49 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Swagger API 文档（无需登录）
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: '文栈博客 API 文档',
+}));
+app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
 
-const secretKey = 'suxin0203_Blog_mysql';
+const secretKey = process.env.JWT_SECRET || 'suxin0203_Blog_mysql';
 
-// 全局中间件，判断是否需要验证 Token
+// 可选 Token：不带 /token 的请求若带 Authorization 则解析并写入 req.user，不强制登录
 app.use((req, res, next) => {
-  if (req.url.includes('/token')) {
-    if (req.headers.authorization) {
-      try {
-        const token = req.headers.authorization.split(' ')[1]; // 获取token
-        req.user = jwt.verify(token, secretKey); // 如果验证通过，在req中写入解密结果
-        if (req.user.is_root === 1) {
-          next(); // 如果有root权限，继续执行下一个中间件
-        } else {
-          res.json({ code: 403, message: '无权限进行此操作' });
-        }
-      } catch (error) {
-        // 判断token是否过期
-        if (error.name === 'TokenExpiredError') {
-          res.json({ code: 401, message: 'Token过期，请重新登录' });
-        } else {
-          res.json({ code: 401, message: 'Token校验失败' });
-        }
-      }
-    } else {
-      res.json({ code: 401, message: 'Token不存在，请登录' });
+  if (!req.url.includes('/token') && req.headers.authorization) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      if (token) req.user = jwt.verify(token, secretKey);
+    } catch (_) {}
+  }
+  next();
+});
+
+// 需登录的 /token 路由：校验 Token，仅 is_root=1（管理员）可访问后台
+app.use((req, res, next) => {
+  if (!req.url.includes('/token')) return next();
+  if (!req.headers.authorization) {
+    return res.status(200).json({ code: 401, message: 'Token不存在，请登录', data: null });
+  }
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    req.user = jwt.verify(token, secretKey);
+    const isAdminOrEditor = req.user.is_root === 1 || req.user.role === 'editor';
+    const isUserLike = req.user.role === 'user' && req.url.startsWith('/likes/token');
+    const isUserFavorite = req.user.role === 'user' && req.url.startsWith('/favorites/token');
+    const selfUserMatch = req.url.match(/^\/users\/token\/(\d+)$/);
+    const isSelfUserUpdate = selfUserMatch && req.method === 'PUT' && Number(selfUserMatch[1]) === Number(req.user.id);
+    if (!isAdminOrEditor && !isUserLike && !isUserFavorite && !isSelfUserUpdate) {
+      return res.status(200).json({ code: 403, message: '无权限进行此操作', data: null });
     }
-  } else {
-    next(); // 如果不需要 Token 验证，直接继续执行下一个中间件或路由处理函数
+    next();
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(200).json({ code: 401, message: 'Token过期，请重新登录', data: null });
+    }
+    return res.status(200).json({ code: 401, message: 'Token校验失败', data: null });
   }
 });
 
@@ -80,12 +116,19 @@ app.use((req, res, next) => {
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/categories', categoryRouter);
-app.use('/articles', acrticleRouter);
+app.use('/articles', articleRouter);
+app.use('/tags', tagRouter);
+app.use('/comments', commentRouter);
+app.use('/likes', articleLikeRouter);
+app.use('/favorites', articleFavoriteRouter);
 app.use('/messages', messageRouter);
 app.use('/otherswitch', otherswitchRouter);
 app.use('/wechat', wechatloginRouter);
 app.use('/upload', uploadJPGRouter);
 app.use('/friendslink', friendslinkRouter);
+app.use('/swiper', swiperRouter);
+app.use('/points', pointsRouter);
+app.use('/dashboard', dashboardRouter);
 app.use('/utils', utilsRouter);
 app.use('/activity', ActivityRouter);
 
@@ -94,12 +137,11 @@ app.use(function (req, res, next) {
   next(createError(404));
 });
 
-// error handler
+// error handler：统一返回 JSON
 app.use(function (err, req, res, next) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-  res.status(err.status || 500);
-  res.render('error');
+  const status = err.status || 500;
+  const message = status === 404 ? '接口不存在' : (err.message || '服务器错误');
+  res.status(status).json({ code: status, message, data: null });
 });
 
 console.log("Server running at http://localhost:8020/");

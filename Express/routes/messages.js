@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const messagescontroller = require('../controllers/messages');
+const messageController = require('../controllers/messageController');
 
+router.get('/', messageController.getAllMessages);
+router.post('/', messageController.createMessage);
+router.put('/token/:id', messageController.updateMessage);
+router.delete('/token/:id', messageController.deleteMessage);
 
-/* GET categorys listing. */
-router.get('/', messagescontroller.getAllMessages);
-router.post('/', messagescontroller.createMessage);
-router.put('/token/:id', messagescontroller.updateMessage);
-router.delete('/token/:id', messagescontroller.deleteMessage);
 module.exports = router;

@@ -86,7 +86,7 @@ exports.lbtUpload = async (req, res, next) => {
       "isShow": true,
       "data": {
         "url": ret_files[0], // 图片 src ，必须
-        "href": `http://api.suxin23.cn${ret_files[0]}` // 图片的链接，非必须
+        "href": `http://api.suxin23.cn/${ret_files[0]}` // 图片的链接，非必须
       }
     }
   )

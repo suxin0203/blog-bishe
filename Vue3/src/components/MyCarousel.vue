@@ -10,9 +10,9 @@
         />
       </n-carousel>
       <div class="title-h1">
-        <h1 v-if="notice.value">{{ notice.content }}</h1>
-        <p class="title-h1-page" v-if="noticecontent.value">
-          {{ noticecontent.content }}
+        <h1 v-if="carouselNotice">{{ carouselNotice }}</h1>
+        <p class="title-h1-page" v-if="carouselNoticeContent">
+          {{ carouselNoticeContent }}
         </p>
       </div>
       <div class="wave wave1"></div>
@@ -30,9 +30,9 @@ import { getOtherswitch, getSwiperList } from "@/api/api";
 import { AdminStore } from "@/stores/AdminStore";
 
 const adminStore = AdminStore();
-let notice = ref({ value: 0 });
-let noticecontent = ref({ value: 0 });
-let fileList = ref({ value: 0 });
+const carouselNotice = ref("");
+const carouselNoticeContent = ref("");
+let fileList = ref([]);
 
 onMounted(() => {
   getOtherswitchs();
@@ -41,16 +41,25 @@ onMounted(() => {
 const getOtherswitchs = async () => {
   const res = await getOtherswitch();
   adminStore.getgloablOptions(res.data);
-  notice.value = res.data.find((item) => item.name === "notice");
-  noticecontent.value = res.data.find((item) => item.name === "noticecontent");
+  const list = res.data || [];
+  const row1 = list.find((item) => item.name === "carousel_notice");
+  const row2 = list.find((item) => item.name === "carousel_noticecontent");
+  carouselNotice.value = row1?.content ?? "";
+  carouselNoticeContent.value = row2?.content ?? "";
   // 旧的轮播图
   // fileList.value = JSON.parse(
   //   res.data.find((item) => item.name === "lunbotu").content
   // );
 
-  // 新的轮播图
-  const SwiperList = await getSwiperList();
-  fileList.value = SwiperList.data;
+  // 轮播图来自 GET /swiper（只展示 status=1）
+  const swiperRes = await getSwiperList();
+  const swiperList = swiperRes.data || [];
+  const base = typeof import.meta.env.VITE_BASE_URL === "string" ? import.meta.env.VITE_BASE_URL.replace(/\/$/, "") : "";
+  fileList.value = swiperList.map((s) => {
+    const url = s.image_url || "";
+    const href = url.startsWith("http") ? url : base ? `${base}/${url.replace(/^\//, "")}` : url;
+    return { id: s.id, href };
+  });
 };
 </script>
 

@@ -16,8 +16,8 @@
         <div class="main-body-l">
           <div class="card" @click="toMsg()">
             <div class="bg">
-              <span @click="toMsg()">点此留言版</span>
-              <span>广告位招租...</span>
+              <span @click.stop="toMsg()">{{ noticeMain || '点此留言板' }}</span>
+              <span>{{ noticeSub || '广告位招租...' }}</span>
             </div>
             <div class="blob"></div>
           </div>
@@ -50,17 +50,13 @@
               @click="toDetail(blog)"
             >
               <blockquote class="contentStyle">
-                <code>
-                  {{ blog.content + "..." }}
-                </code>
+                <code>{{ (blog.summary || blog.content || '') + (blog.summary || blog.content ? '...' : '') }}</code>
               </blockquote>
               <template #footer>
                 <n-space justify="space-between">
                   <n-space>
                     <n-icon :component="CodeSlashOutline" size="20" />
-                    <span>
-                      {{ categoryMap[blog.category_id] }}
-                    </span>
+                    <span>{{ categoryMap[blog.category_id] || '未分类' }}</span>
                   </n-space>
                   <n-space>
                     <n-icon :component="TimeOutline" size="20" />
@@ -75,36 +71,42 @@
         <div class="main-body-r">
           <div class="stk">
             <n-space vertical class="animate__animated animate__fadeInRight">
-              <n-card hoverable>
-                <div class="myavatar">
-                  <n-avatar
-                    round
-                    size="60"
-                    class="animate__animated animate__rotateIn"
-                    :src="displayAvatarUrl"
-                    @click="gouser"
-                  />
-                  <p>{{ displayUsername }}</p>
-                  <n-button type="primary" @click="token ? logout() : gouser()">
-                    {{ token ? "注销" : "登录" }}</n-button
-                  >
-                </div>
-              </n-card>
               <n-card
                 title="🏷️ 分类"
                 hoverable
                 v-if="categoryOptions.length > 0"
+                class="sidebar-card"
               >
-                <n-space>
+                <n-space wrap>
                   <n-tag
-                    :bordered="false"
-                    type="success"
                     v-for="categoryname in categoryOptions"
                     :key="categoryname.value"
+                    :bordered="false"
+                    :type="pageInfo.category_id === categoryname.value ? 'success' : 'default'"
+                    class="category-tag"
+                    @click="searchCategory(categoryname.value)"
                   >
                     {{ categoryname.label }}
                   </n-tag>
                 </n-space>
+              </n-card>
+              <n-card title="🔖 标签" hoverable class="sidebar-card" v-if="tagOptions.length > 0">
+                <n-space wrap>
+                  <n-tag
+                    v-for="t in tagOptions"
+                    :key="t.value"
+                    :bordered="false"
+                    type="info"
+                    size="small"
+                    class="category-tag"
+                    @click="goArticlesByTag(t.value)"
+                  >
+                    {{ t.label }}
+                  </n-tag>
+                </n-space>
+                <template #header-extra>
+                  <n-text depth="2" style="font-size: 11px">点标签→文章页</n-text>
+                </template>
               </n-card>
               <n-card title="🔗 友链" hoverable v-if="friendUrl.length > 0">
                 <n-space>
@@ -121,53 +123,20 @@
                 </n-space>
               </n-card>
               <n-card
-                title="📖 网易热评"
+                v-if="promoCard?.enabled && promoCard?.title"
+                :title="'📖 ' + promoCard.title"
                 embedded
                 :bordered="false"
                 hoverable
-                v-if="musicSwitch.url"
+                class="sidebar-card promo-card"
               >
-                <n-space>
-                  <n-gradient-text :size="16" type="success">
-                    {{ musicSwitch.name }}
-                  </n-gradient-text>
-                  <span>
-                    <n-tag :bordered="false" type="info"
-                      >{{ musicSwitch.nickname }}：</n-tag
-                    >
-                    {{ musicSwitch.content }}</span
-                  >
-                  <n-space justify="space-around">
-                    <n-button
-                      :loading="loadingRef"
-                      type="primary"
-                      ghost
-                      size="small"
-                      :render-icon="renderIcon"
-                      @click="getMusicComment()"
-                    >
-                      下一条
-                    </n-button>
-                    <n-button
-                      :loading="loadingRef"
-                      type="primary"
-                      ghost
-                      size="small"
-                      :render-icon="MusicalNotesOutlineIcon"
-                      @click="playmusic(musicSwitch.url)"
-                    >
-                      听此曲
-                    </n-button>
-                  </n-space>
+                <n-space v-if="promoCard.tags?.length" wrap style="margin-bottom: 8px;">
+                  <n-tag v-for="t in promoCard.tags" :key="t" :bordered="false" type="info" size="small">
+                    {{ t }}
+                  </n-tag>
                 </n-space>
+                <div class="promo-card-content">{{ promoCard.content || '' }}</div>
               </n-card>
-              <MusicPlayer :musicData="musicSwitch" v-show="showMyaudio" />
-              <!-- <n-pagination
-                style="width: 100%"
-                v-model:page="pageInfo.page"
-                :page-count="pageInfo.totalPages"
-                simple
-              /> -->
             </n-space>
           </div>
         </div>
@@ -205,20 +174,17 @@ import MyCarouselVue from "@/components/MyCarousel.vue";
 import { AdminStore } from "@/stores/AdminStore";
 import { NIcon } from "naive-ui";
 import axios from "axios";
-import MusicPlayer from "@/components/HomeComponents/MusicPlayer.vue";
 import {
   CodeSlashOutline,
   TimeOutline,
-  ReloadOutline,
-  MusicalNotesOutline,
 } from "@vicons/ionicons5";
 
 import {
   getCategoryList,
   getArticleList,
   getOtherswitch,
-  getMusicComments,
   getLinksList,
+  getTagList,
 } from "@/api/api";
 
 const adminStore = AdminStore();
@@ -228,33 +194,58 @@ const categoryMap = ref({}); //分类列表
 const blogListInfo = ref([]);
 const show = ref(true);
 const animationClass = ref("");
-const musicSwitch = ref({});
-const showMyaudio = ref(false);
-const renderIcon = () => {
-  return h(NIcon, null, {
-    default: () => h(ReloadOutline),
-  });
-};
-const MusicalNotesOutlineIcon = () => {
-  return h(NIcon, null, {
-    default: () => h(MusicalNotesOutline),
-  });
-};
-const loadingRef = ref(false);
 const displayUsername = ref(
   (nickname || username || "未登录") + (is_root ? "👑" : "")
 );
 const displayAvatarUrl = ref(
-  avatar_url || "https://q2.qlogo.cn/headimg_dl?spec=100&dst_uin=208082474"
+  avatar_url || "https://api.suxin23.cn/upload/avatar.png"
 );
 const friendUrl = ref([]);
+const promoCard = ref(null);
+const tagOptions = ref([]);
+const noticeMain = ref('');
+const noticeSub = ref('');
 
 onMounted(async () => {
   await getCategories();
+  await getTags();
   getArtiles();
   getFriendslink();
-  getMusicComment();
+  loadPromoCard();
 });
+
+const getTags = async () => {
+  try {
+    const res = await getTagList();
+    const list = Array.isArray(res.data) ? res.data : [];
+    tagOptions.value = list.map((item) => ({ label: item.name, value: item.id }));
+  } catch (_) {
+    tagOptions.value = [];
+  }
+};
+// 首页侧栏点标签：跳转到文章页并带标签筛选（与首页分类筛选差异化）
+const goArticlesByTag = (tagId) => {
+  router.push({ path: "/articles", query: { tag_id: tagId } });
+};
+
+function loadPromoCard() {
+  getOtherswitch().then((res) => {
+    const list = res.data || [];
+    const item = list.find((i) => i.name === "promo_card");
+    if (item) {
+      let parsed = { enabled: !!item.value, title: "", tags: [], content: "" };
+      try {
+        if (item.content) parsed = { ...parsed, ...JSON.parse(item.content) };
+      } catch (_) {}
+      if (!Array.isArray(parsed.tags)) parsed.tags = [];
+      promoCard.value = parsed;
+    }
+    const noticeRow = list.find((i) => i.name === "notice") || list.find((i) => i.name === "home_notice");
+    const noticeContentRow = list.find((i) => i.name === "noticecontent") || list.find((i) => i.name === "home_noticecontent");
+    noticeMain.value = (noticeRow?.content ?? "").trim();
+    noticeSub.value = (noticeContentRow?.content ?? "").trim();
+  });
+}
 
 const gohome = () => {
   router.push("/"); //跳转到首页
@@ -270,30 +261,11 @@ const getFriendslink = async () => {
   friendUrl.value = res.data;
 };
 
-// 播放音乐
-const playmusic = (url) => {
-  loadingRef.value = true;
-  showMyaudio.value = true;
-  setTimeout(() => {
-    loadingRef.value = false;
-  }, 3000);
-  // let audio = document.getElementById("Myaudio");
-  // audio.src = url;
-  // audio.play();
-};
 const logout = () => {
   // delToken
   adminStore.delToken();
   console.log("退出登录");
   window.location.reload();
-};
-// 获取音乐评论
-const getMusicComment = async () => {
-  loadingRef.value = true;
-  let res = await getMusicComments();
-  musicSwitch.value = res.data;
-  loadingRef.value = false;
-  // axios.get('https://api.uomg.com/api/comments.163?format=json').then(res => console.log(res)).catch(error => console.log(error))
 };
 // 获取全部分类
 const getCategories = async () => {
@@ -320,9 +292,13 @@ const toDetail = (blog) => {
   router.push({ path: "/detail", query: { id: blog.id } });
 };
 
-//跳转到/dashboard/user
+// 去个人中心或登录
 const gouser = () => {
   adminStore.token ? router.push("/dashboard/user") : router.push("/login");
+};
+// 进入后台首页
+const goDashboard = () => {
+  router.push("/dashboard");
 };
 
 const changePageSize = (pageSize) => {
@@ -339,18 +315,17 @@ const pageInfo = reactive({
   category_id: 0, //  分类id
 });
 
-// 获取博客列表
+// 获取博客列表（后端返回 data: { list, pagination }）
 const getArtiles = async (page) => {
   show.value = true;
-  // 分页 搜索 分类 默认第一页
-  if (page === 1) {
-    pageInfo.page = page;
-  }
-  pageInfo.category_id === 0 ? delete pageInfo.category_id : "";
-  getArticleList(pageInfo).then((res) => {
-    blogListInfo.value = res.data;
-    pageInfo.totalPages = res.pagination.totalPages;
-    pageInfo.count = res.pagination.total;
+  if (page === 1) pageInfo.page = 1;
+  const params = { page: pageInfo.page, pageSize: pageInfo.pageSize, keyword: pageInfo.keyword };
+  if (pageInfo.category_id && pageInfo.category_id !== 0) params.category_id = pageInfo.category_id;
+  getArticleList(params).then((res) => {
+    const data = res.data || {};
+    blogListInfo.value = Array.isArray(data.list) ? data.list : [];
+    pageInfo.totalPages = data.pagination?.totalPages ?? 1;
+    pageInfo.count = data.pagination?.total ?? 0;
     show.value = false;
   });
 };
@@ -385,6 +360,20 @@ const searchKeyword = (keyword) => {
 //     color: gray !important;
 //   }
 // }
+.sidebar-card .category-tag {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.sidebar-card .category-tag:hover {
+  opacity: 0.9;
+}
+.promo-card .promo-card-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--n-text-color);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .lbt {
   position: relative;
   width: 100%;
@@ -493,15 +482,34 @@ const searchKeyword = (keyword) => {
 //   object-fit: cover;
 // }
 
-.myavatar {
-  width: 100%;
-  height: 150px;
-
+.sidebar-user-card .myavatar {
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  // #avatarhover:hover 放大1.2倍动画
+  gap: 8px;
+}
+.avatar-clickable {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.avatar-clickable:hover {
+  transform: scale(1.06);
+}
+.sidebar-username {
+  margin: 0;
+  font-weight: 500;
+  font-size: 15px;
+}
+.sidebar-back-btn {
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-logout-btn {
+  flex: 1;
+  min-width: 0;
 }
 .stk {
   position: sticky;

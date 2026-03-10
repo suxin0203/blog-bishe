@@ -1,13 +1,29 @@
+:root {
+  --page-bg: #f5f6f8;
+  --card-bg: #fff;
+  --primary: #18a058;
+  --primary-soft: rgba(24, 160, 88, 0.12);
+  --border: #e8e8ec;
+  --text-secondary: #636873;
+  --radius: 8px;
+  --spacing: 16px;
+}
+
 body {
   margin: 0;
   padding: 0;
-  background: #eee;
+  background: var(--page-bg);
   position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #333;
 }
 a {
   text-decoration: none;
-  color: #000;
+  color: #333;
   cursor: pointer;
+}
+a:hover {
+  color: var(--primary);
 }
 li {
   list-style: none;
@@ -65,4 +81,14 @@ li {
 
 .editor-content-view input[type="checkbox"] {
   margin-right: 5px;
+}
+
+/* 管理后台表格统一 */
+.dashboard-content .admin-table .n-data-table-th {
+  background: var(--page-bg, #f5f6f8);
+  font-weight: 600;
+  color: var(--text-secondary, #636873);
+}
+.dashboard-content .admin-table .n-data-table-td {
+  vertical-align: middle;
 }
