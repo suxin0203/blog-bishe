@@ -33,13 +33,14 @@ instance.interceptors.request.use(
   }
 );
 
-// 响应拦截器：业务 401 时尝试用 refreshToken 刷新后再重试
+// 响应拦截器：遇到 401 时尝试用 refreshToken 刷新，成功后刷新整页
 instance.interceptors.response.use(
   async (response) => {
-    if (response.data.code === 403) {
+    const code = response.data?.code;
+    if (code === 403) {
       message.error(response.data.message || "没有权限");
     }
-    if (response.data.code === 401) {
+    if (code === 401) {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
@@ -53,13 +54,19 @@ instance.interceptors.response.use(
               localStorage.setItem('userInfo', JSON.stringify(data.data));
               adminStore.getAdminInfo();
             }
-            message.success('登录已刷新，请重试');
-            return response.data;
+            // 刷新成功后直接刷新当前页面，后续请求自动带上新 token
+            window.location.reload();
+            return;
           }
         } catch (_) {}
       }
       adminStore.delToken();
       message.error(response.data.message || "请重新登录");
+      return response.data;
+    }
+    // 其余非 200 的业务码统一提示后返回
+    if (code && code !== 200) {
+      message.error(response.data.message || "请求失败");
     }
     return response.data;
   },
@@ -79,14 +86,18 @@ instance.interceptors.response.use(
             localStorage.setItem('userInfo', JSON.stringify(data.data));
             adminStore.getAdminInfo();
           }
-          error.config.headers['Authorization'] = 'Bearer ' + data.token;
-          return instance.request(error.config);
+          // 刷新成功后直接刷新当前页面
+          window.location.reload();
+          return;
         }
       } catch (_) {}
     }
     if (is401) {
       adminStore.delToken();
       message.error(res?.data?.message || "登录已过期，请重新登录");
+    } else if (res?.data?.message) {
+      // 其他接口异常也提示后端返回的 message
+      message.error(res.data.message);
     }
     return Promise.reject(error);
   }
