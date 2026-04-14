@@ -6,6 +6,7 @@ const logger = require('morgan');
 const jwt = require('jsonwebtoken');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
+const userService = require('./services/userService');
 const cors = require('cors');
 const multer = require('multer');
 // 使用 multer 中间件处理文件上传
@@ -28,6 +29,8 @@ const articleFavoriteRouter = require('./routes/articleFavorites');
 const messageRouter = require('./routes/messages');
 const otherswitchRouter = require('./routes/otherswitch');
 const wechatloginRouter = require('./routes/wechatlogin');
+const qrLoginRouter = require('./routes/qrLogin');
+const miniappQrLoginRouter = require('./routes/miniappQrLogin');
 const uploadJPGRouter = require('./routes/uploadJPG');
 const friendslinkRouter = require('./routes/friendslink');
 const swiperRouter = require('./routes/swiper');
@@ -90,7 +93,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   if (!req.url.includes('/token')) return next();
   if (!req.headers.authorization) {
-    return res.status(200).json({ code: 401, message: 'Token不存在，请登录', data: null });
+    return res.status(401).json({ code: 401, message: 'Token不存在', data: null });
   }
   try {
     const token = req.headers.authorization.split(' ')[1];
@@ -101,14 +104,37 @@ app.use((req, res, next) => {
     const selfUserMatch = req.url.match(/^\/users\/token\/(\d+)$/);
     const isSelfUserUpdate = selfUserMatch && req.method === 'PUT' && Number(selfUserMatch[1]) === Number(req.user.id);
     if (!isAdminOrEditor && !isUserLike && !isUserFavorite && !isSelfUserUpdate) {
-      return res.status(200).json({ code: 403, message: '无权限进行此操作', data: null });
+      return res.status(403).json({ code: 403, message: '当前角色无权限进行此操作', data: null });
+    }
+    if (req.user?.id) {
+      userService.findById(req.user.id)
+        .then((dbUser) => {
+          if (!dbUser) {
+            return res.status(401).json({ code: 401, message: '用户不存在', data: null });
+          }
+          if (Number(dbUser.status) === 1) {
+            return res.status(403).json({ code: 403, message: '账号已停用，请联系管理员', data: null });
+          }
+          req.user = {
+            ...req.user,
+            role: dbUser.role,
+            is_root: dbUser.is_root,
+            status: dbUser.status,
+          };
+          next();
+        })
+        .catch((err) => {
+          console.error(err);
+          return res.status(500).json({ code: 500, message: '服务器错误', data: null });
+        });
+      return;
     }
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      return res.status(200).json({ code: 401, message: 'Token过期，请重新登录', data: null });
+      return res.status(401).json({ code: 401, message: 'Token过期', data: null });
     }
-    return res.status(200).json({ code: 401, message: 'Token校验失败', data: null });
+    return res.status(401).json({ code: 401, message: 'Token校验失败', data: null });
   }
 });
 
@@ -124,6 +150,8 @@ app.use('/favorites', articleFavoriteRouter);
 app.use('/messages', messageRouter);
 app.use('/otherswitch', otherswitchRouter);
 app.use('/wechat', wechatloginRouter);
+app.use('/qr-login', qrLoginRouter);
+app.use('/miniapp', miniappQrLoginRouter);
 app.use('/upload', uploadJPGRouter);
 app.use('/friendslink', friendslinkRouter);
 app.use('/swiper', swiperRouter);

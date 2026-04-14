@@ -16,6 +16,6 @@ router.post('/orders', pointsController.createOrder);
 router.put('/token/orders/:id', pointsController.updateOrderStatus);
 
 // 积分流水
-router.get('/log', pointsController.getPointsLog);
+router.get('/token/log', pointsController.getPointsLog);
 
 module.exports = router;

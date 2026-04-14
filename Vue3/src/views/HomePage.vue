@@ -59,6 +59,10 @@
                     <span>{{ categoryMap[blog.category_id] || '未分类' }}</span>
                   </n-space>
                   <n-space>
+                    <n-icon :component="PersonOutline" size="18" />
+                    <span>{{ blog.author_name || '用户已注销' }}</span>
+                  </n-space>
+                  <n-space>
                     <n-icon :component="TimeOutline" size="20" />
                     <span> {{ blog.created_at }} </span>
                   </n-space>
@@ -176,6 +180,7 @@ import { NIcon } from "naive-ui";
 import axios from "axios";
 import {
   CodeSlashOutline,
+  PersonOutline,
   TimeOutline,
 } from "@vicons/ionicons5";
 

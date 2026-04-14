@@ -62,6 +62,25 @@ export function getCaptcha() {
   })
 }
 
+// 创建 PC 扫码登录会话，返回 sceneId + expiresAt + miniProgramCode
+export function createQrLoginSession(data) {
+  return request({
+    url: '/qr-login/session',
+    method: 'post',
+    data: data || { channel: 'pc' },
+    // 生成小程序码涉及外网请求，适当放宽超时时间
+    timeout: 10000,
+  })
+}
+
+// 查询 PC 扫码登录会话状态
+export function getQrLoginSessionStatus(sceneId) {
+  return request({
+    url: `/qr-login/session/${sceneId}`,
+    method: 'get',
+  })
+}
+
 // 登录（对接 Express：POST /users/login，返回 { code, message, token, data }）
 export function userLogin(data) {
   return request({
@@ -295,11 +314,12 @@ export function updateUserPassword(data) {
   })
 }
 
-// 删除用户
-export function deleteUserById(id) {
+// 删除用户（默认停用；传 hard=1 时彻底删除）
+export function deleteUserById(id, params) {
   return request({
     url: `/users/token/${id}`,
     method: 'delete',
+    params: params || {},
   })
 }
 
@@ -533,7 +553,7 @@ export function getDashboardTrafficSource() {
 // 积分流水（当前用户：不传 userId；管理员查他人：传 userId）
 export function getPointsLog(params) {
   return request({
-    url: '/points/log',
+    url: '/points/token/log',
     method: 'get',
     params: params || {},
   })

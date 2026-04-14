@@ -140,6 +140,7 @@ let articleChart = null;
 const articleRankList = ref([]);
 const rankColumns = [
   { title: "标题", key: "title", ellipsis: { tooltip: true } },
+  { title: "作者", key: "author_name", width: 120, ellipsis: { tooltip: true } },
   { title: "阅读", key: "view_count", width: 72 },
   { title: "点赞", key: "like_count", width: 64 },
   { title: "评论", key: "comment_count", width: 64 },
@@ -237,6 +238,7 @@ async function fetchAll() {
     articleRankList.value = (unwrap(rankRes) || []).map((r) => ({
       ...r,
       title: r.title || "-",
+      author_name: r.author_name || "用户已注销",
       view_count: r.view_count ?? 0,
       like_count: r.like_count ?? 0,
       comment_count: r.comment_count ?? 0,

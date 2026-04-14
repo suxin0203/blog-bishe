@@ -1,10 +1,10 @@
 const runQuery = require('../common/utils');
-const pointsService = require('./pointsService');
 
 // 评论状态：0=待审核 1=已通过 2=屏蔽
 async function getListByArticleId(articleId, { status = 1 } = {}) {
   const sql = `
-    SELECT c.*, u.nickname AS user_name, u.avatar_url AS user_avatar, u.title AS user_title,
+    SELECT c.*, COALESCE(u.nickname, '用户已注销') AS user_name,
+           u.avatar_url AS user_avatar, u.title AS user_title,
            u.role AS user_role, u.is_root AS user_is_root,
            (SELECT a.author_id FROM wz_articles a WHERE a.id = c.article_id) AS article_author_id
     FROM wz_comments c
@@ -60,13 +60,6 @@ async function update(id, { content, status }) {
     const aid = comment.article_id;
     if (comment.status !== 1 && status === 1) {
       await runQuery('UPDATE wz_articles SET comment_count = comment_count + 1 WHERE id = ?', [aid]);
-      if (comment.user_id) {
-        try {
-          await pointsService.addPointsLog(comment.user_id, 2, 'comment');
-        } catch (e) {
-          console.error('points comment', e);
-        }
-      }
     } else if (comment.status === 1 && (status === 0 || status === 2)) {
       await runQuery('UPDATE wz_articles SET comment_count = GREATEST(0, comment_count - 1) WHERE id = ?', [aid]);
     }
@@ -101,7 +94,7 @@ async function getList({ status, keyword, page = 1, pageSize = 20 } = {}) {
   }
   const countSql = `SELECT COUNT(*) AS total FROM wz_comments c LEFT JOIN wz_users u ON u.id = c.user_id WHERE ${where}`;
   const listSql = `
-    SELECT c.*, u.nickname AS user_name, u.username, u.avatar_url AS user_avatar,
+    SELECT c.*, COALESCE(u.nickname, '用户已注销') AS user_name, u.username, u.avatar_url AS user_avatar,
            (SELECT a.title FROM wz_articles a WHERE a.id = c.article_id) AS article_title,
            (SELECT a.author_id FROM wz_articles a WHERE a.id = c.article_id) AS article_author_id
     FROM wz_comments c

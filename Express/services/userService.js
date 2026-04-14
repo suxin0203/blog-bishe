@@ -1,7 +1,11 @@
 const runQuery = require('../common/utils');
 
-async function findByUsername(username) {
-  const rows = await runQuery('SELECT * FROM wz_users WHERE username = ?', [username]);
+async function findByUsername(username, options = {}) {
+  const includeDisabled = options.includeDisabled === true;
+  const sql = includeDisabled
+    ? 'SELECT * FROM wz_users WHERE username = ? LIMIT 1'
+    : 'SELECT * FROM wz_users WHERE username = ? AND (status IS NULL OR status = 0) LIMIT 1';
+  const rows = await runQuery(sql, [username]);
   return rows[0] || null;
 }
 
@@ -19,6 +23,11 @@ async function findById(id) {
 async function findAll(opts = {}) {
   let where = '1=1';
   const values = [];
+  const status = opts.status !== undefined && opts.status !== null && opts.status !== '' ? Number(opts.status) : null;
+  if (status !== null && !Number.isNaN(status)) {
+    where += ' AND status = ?';
+    values.push(status);
+  }
   if (opts.keyword && String(opts.keyword).trim()) {
     const k = `%${String(opts.keyword).trim()}%`;
     where += ' AND (username LIKE ? OR nickname LIKE ? OR title LIKE ?)';
@@ -42,7 +51,21 @@ async function create({ username, password, email = null, nickname = null, role 
 }
 
 async function update(id, fields) {
-  const allow = ['nickname', 'avatar_url', 'email', 'status', 'role', 'points', 'title', 'refresh_token', 'refresh_token_expires_at', 'reset_attempt_count', 'reset_attempt_date'];
+  const allow = [
+    'username',
+    'nickname',
+    'avatar_url',
+    'email',
+    'status',
+    'role',
+    'points',
+    'title',
+    'refresh_token',
+    'refresh_token_expires_at',
+    'reset_attempt_count',
+    'reset_attempt_date',
+    'openid',
+  ];
   const set = [];
   const values = [];
   for (const [k, v] of Object.entries(fields)) {
@@ -71,6 +94,8 @@ async function updateLastLogin(id) {
 }
 
 async function remove(id) {
+  await runQuery('UPDATE wz_articles SET author_id = NULL WHERE author_id = ?', [id]);
+  await runQuery('UPDATE wz_comments SET user_id = NULL WHERE user_id = ?', [id]);
   const result = await runQuery('DELETE FROM wz_users WHERE id = ?', [id]);
   return result.affectedRows ?? 0;
 }

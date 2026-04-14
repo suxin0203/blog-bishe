@@ -24,6 +24,9 @@
                 <n-tag :bordered="false" type="success">
                   {{ blogInfo.category_name }}
                 </n-tag>
+                <n-tag v-if="blogInfo.author_name" :bordered="false" type="default">
+                  作者：{{ blogInfo.author_name }}
+                </n-tag>
                 <n-tag v-for="t in articleTagNames" :key="t.id" :bordered="false" type="info" size="small">
                   {{ t.name }}
                 </n-tag>
@@ -211,6 +214,10 @@
                     <n-space wrap :size="6">
                       <n-tag v-for="t in articleTagNames" :key="t.id" :bordered="false" type="info" size="small">{{ t.name }}</n-tag>
                     </n-space>
+                  </div>
+                  <div v-if="blogInfo.author_name" class="sidebar-meta">
+                    <span class="sidebar-meta-label">作者</span>
+                    <span class="sidebar-meta-value">{{ blogInfo.author_name }}</span>
                   </div>
                   <div class="sidebar-meta">
                     <span class="sidebar-meta-label">发布于</span>

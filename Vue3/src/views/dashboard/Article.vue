@@ -79,37 +79,19 @@
             <div class="add-article-pane">
               <div class="add-article-scroll">
                 <n-form ref="addForm" class="add-article-form" label-placement="top" label-width="auto">
-                  <n-form-item label="标题" required>
-                    <n-input
-                      v-model:value="addArticleData.title"
-                      placeholder="请输入文章标题"
-                      clearable
-                      maxlength="200"
-                      show-count
-                    />
-                  </n-form-item>
-                  <n-form-item label="摘要">
-                    <n-input
-                      v-model:value="addArticleData.summary"
-                      type="textarea"
-                      placeholder="选填，用于列表/卡片展示，不填则自动从正文截取"
-                      :rows="3"
-                      maxlength="500"
-                      show-count
-                      clearable
-                    />
-                  </n-form-item>
-                  <n-grid :cols="2" :x-gap="16">
-                    <n-gi>
-                      <n-form-item label="分类" required>
-                        <n-select
-                          v-model:value="addArticleData.category_id"
-                          :options="categoryOptions"
-                          placeholder="选择分类"
+                  <n-grid :cols="24" :x-gap="16">
+                    <n-gi :span="18">
+                      <n-form-item label="标题" required>
+                        <n-input
+                          v-model:value="addArticleData.title"
+                          placeholder="请输入文章标题"
+                          clearable
+                          maxlength="200"
+                          show-count
                         />
                       </n-form-item>
                     </n-gi>
-                    <n-gi>
+                    <n-gi :span="6">
                       <n-form-item label="状态">
                         <n-select
                           v-model:value="addArticleData.status"
@@ -119,12 +101,36 @@
                       </n-form-item>
                     </n-gi>
                   </n-grid>
-                  <n-form-item label="标签">
-                    <n-select
-                      v-model:value="addArticleData.tag_ids"
-                      :options="tagOptions"
-                      multiple
-                      placeholder="多选标签（可选）"
+                  <n-grid :cols="24" :x-gap="16">
+                    <n-gi :span="8">
+                      <n-form-item label="分类" required>
+                        <n-select
+                          v-model:value="addArticleData.category_id"
+                          :options="categoryOptions"
+                          placeholder="选择分类"
+                        />
+                      </n-form-item>
+                    </n-gi>
+                    <n-gi :span="16">
+                      <n-form-item label="标签">
+                        <n-select
+                          v-model:value="addArticleData.tag_ids"
+                          :options="tagOptions"
+                          multiple
+                          placeholder="多选标签（可选）"
+                          clearable
+                        />
+                      </n-form-item>
+                    </n-gi>
+                  </n-grid>
+                  <n-form-item label="摘要">
+                    <n-input
+                      v-model:value="addArticleData.summary"
+                      type="textarea"
+                      placeholder="选填，用于列表/卡片展示，不填则自动从正文截取"
+                      :rows="3"
+                      maxlength="500"
+                      show-count
                       clearable
                     />
                   </n-form-item>
@@ -212,30 +218,54 @@
       <!-- 修改文章：抽屉内编辑，从列表点击「修改」打开 -->
       <n-drawer
         v-model:show="showUpdateDrawer"
-        :width="540"
+        width="calc(100vw - 220px)"
         placement="right"
         :trap-focus="false"
+        :style="{ maxWidth: 'calc(100vw - 220px)' }"
         display-directive="show"
       >
-        <n-drawer-content title="修改文章" closable>
+        <n-drawer-content title="修改文章" closable content-class="article-update-drawer-content">
           <template #header>
             <span>修改文章 <n-tag v-if="updateArticle.id" size="small" type="info">ID {{ updateArticle.id }}</n-tag></span>
           </template>
           <n-form ref="updateForm" class="update-drawer-form" label-placement="top">
-            <n-form-item label="标题" required>
-              <n-input v-model:value="updateArticle.title" placeholder="请输入标题" clearable maxlength="200" show-count />
-            </n-form-item>
-            <n-form-item label="分类" required>
-              <n-select v-model:value="updateArticle.category_id" :options="categoryOptions" placeholder="选择分类" />
-            </n-form-item>
-            <n-form-item label="状态">
-              <n-select v-model:value="updateArticle.status" :options="statusOptions" placeholder="选择状态" />
-            </n-form-item>
-            <n-form-item label="标签">
-              <n-select v-model:value="updateArticle.tag_ids" :options="tagOptions" multiple placeholder="多选标签" clearable />
+            <n-grid :cols="24" :x-gap="16">
+              <n-gi :span="18">
+                <n-form-item label="标题" required>
+                  <n-input v-model:value="updateArticle.title" placeholder="请输入标题" clearable maxlength="200" show-count />
+                </n-form-item>
+              </n-gi>
+              <n-gi :span="6">
+                <n-form-item label="状态">
+                  <n-select v-model:value="updateArticle.status" :options="statusOptions" placeholder="选择状态" />
+                </n-form-item>
+              </n-gi>
+            </n-grid>
+            <n-grid :cols="24" :x-gap="16">
+              <n-gi :span="8">
+                <n-form-item label="分类" required>
+                  <n-select v-model:value="updateArticle.category_id" :options="categoryOptions" placeholder="选择分类" />
+                </n-form-item>
+              </n-gi>
+              <n-gi :span="16">
+                <n-form-item label="标签">
+                  <n-select v-model:value="updateArticle.tag_ids" :options="tagOptions" multiple placeholder="多选标签" clearable />
+                </n-form-item>
+              </n-gi>
+            </n-grid>
+            <n-form-item label="摘要">
+              <n-input
+                v-model:value="updateArticle.summary"
+                type="textarea"
+                placeholder="选填，用于列表/卡片展示，不填则自动从正文截取"
+                :rows="3"
+                maxlength="500"
+                show-count
+                clearable
+              />
             </n-form-item>
             <n-form-item label="正文内容" required>
-              <rich-text-editor :height="'320px'" v-model="updateArticle.content" />
+              <rich-text-editor :height="'420px'" v-model="updateArticle.content" />
             </n-form-item>
             <n-form-item>
               <n-space>
@@ -689,8 +719,16 @@ const clearRecycleBin = async () => {
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
 }
+.add-article-scroll :deep(.n-scrollbar-content),
+.add-article-scroll :deep(.n-scrollbar-content-wrapper) {
+  min-width: 100%;
+}
 .add-article-form {
-  max-width: 720px;
+  width: 100%;
+  max-width: none;
+}
+.add-article-form :deep(.n-grid) {
+  width: 100%;
 }
 .add-article-form :deep(.n-form-item-label) {
   font-weight: 500;
@@ -705,8 +743,30 @@ const clearRecycleBin = async () => {
 }
 
 /* 修改文章抽屉 */
+.update-drawer-form {
+  max-width: none;
+}
 .update-drawer-form :deep(.n-form-item) {
   margin-bottom: 18px;
+}
+.article-page :deep(.n-drawer) {
+  z-index: 2200;
+}
+.article-page :deep(.n-drawer-content-wrapper) {
+  width: calc(100vw - 220px) !important;
+  max-width: calc(100vw - 220px);
+}
+.article-page :deep(.article-update-drawer-content) {
+  padding-bottom: 32px;
+}
+.article-page :deep(.article-update-drawer-content .n-drawer-body-content-wrapper) {
+  padding-right: 24px;
+}
+@media screen and (max-width: 768px) {
+  .article-page :deep(.n-drawer-content-wrapper) {
+    width: calc(100vw - 64px) !important;
+    max-width: calc(100vw - 64px);
+  }
 }
 
 .admin-page-card {

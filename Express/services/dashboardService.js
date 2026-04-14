@@ -19,7 +19,11 @@ async function getStats() {
 async function getArticleRank({ type = 'view_count', limit = 10 } = {}) {
   const col = ['view_count', 'like_count', 'comment_count', 'favorite_count'].includes(type) ? type : 'view_count';
   const rows = await runQuery(
-    `SELECT id, title, view_count, like_count, comment_count, favorite_count, created_at FROM wz_articles WHERE status IN (0, 1) ORDER BY ${col} DESC LIMIT ?`,
+    `SELECT id, title, view_count, like_count, comment_count, favorite_count, created_at,
+            COALESCE((SELECT nickname FROM wz_users WHERE id = wz_articles.author_id), '用户已注销') AS author_name
+     FROM wz_articles
+     WHERE status IN (0, 1)
+     ORDER BY ${col} DESC LIMIT ?`,
     [Number(limit)]
   );
   rows.forEach((r) => {

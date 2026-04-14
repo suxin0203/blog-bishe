@@ -89,8 +89,9 @@ exports.deleteGoods = async (req, res) => {
 // ---------- 订单 ----------
 exports.getOrderList = async (req, res) => {
   try {
-    if (req.query.my === '1' && !req.user?.id) return fail(res, '请先登录', 401);
-    const userId = req.query.my === '1' ? req.user.id : req.query.userId;
+    if (!req.user?.id) return fail(res, '请先登录', 401);
+    const isAdminOrEditor = req.user.is_root === 1 || req.user.role === 'editor';
+    const userId = isAdminOrEditor ? req.query.userId : req.user.id;
     const { list, total } = await pointsService.getOrderList({
       userId,
       status: req.query.status,
@@ -107,8 +108,13 @@ exports.getOrderList = async (req, res) => {
 
 exports.getOrderById = async (req, res) => {
   try {
+    if (!req.user?.id) return fail(res, '请先登录', 401);
     const order = await pointsService.getOrderById(req.params.id);
     if (!order) return fail(res, '订单不存在', 404);
+    const isAdminOrEditor = req.user.is_root === 1 || req.user.role === 'editor';
+    if (!isAdminOrEditor && Number(order.user_id) !== Number(req.user.id)) {
+      return fail(res, '无权查看该订单', 403);
+    }
     order.created_at = order.created_at?.toLocaleString?.() ?? order.created_at;
     order.updated_at = order.updated_at?.toLocaleString?.() ?? order.updated_at;
     return success(res, order, 'ok');

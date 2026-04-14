@@ -5,6 +5,8 @@ const userService = require('../services/userService');
 const pointsService = require('../services/pointsService');
 const { success, fail, error } = require('../common/response');
 
+const ADMIN_POINT_REASON_PREFIX = 'admin_adjust:';
+
 const POINTS_DAILY_LOGIN = 5;
 const CAPTCHA_TTL_MS = 5 * 60 * 1000; // 5 分钟
 const captchaStore = new Map();
@@ -103,7 +105,8 @@ exports.getAllUsers = async (req, res) => {
   try {
     const sort = req.query.sort === 'points' ? 'points' : undefined;
     const keyword = req.query.keyword;
-    const list = await userService.findAll({ sort, keyword });
+    const status = req.query.status !== undefined && req.query.status !== '' ? Number(req.query.status) : undefined;
+    const list = await userService.findAll({ sort, keyword, status });
     list.forEach(formatUser);
     return success(res, list, '获取用户列表成功');
   } catch (e) {
@@ -125,16 +128,43 @@ exports.getUserById = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { nickname, avatar_url, email, status, role, title } = req.body;
+    const { nickname, avatar_url, email, status, role, title, points_adjustment, points_remark } = req.body;
     const id = Number(req.params.id);
     const isSelf = req.user && Number(req.user.id) === id;
-    // 自己改自己：允许昵称、头像、邮箱、称号（如积分订单完成后自动写入）；不允许改角色/状态
+    const isAdmin = req.user?.is_root === 1;
+    const nextRole = role != null ? String(role).toLowerCase() : undefined;
+    const pointsAdjustment = points_adjustment !== undefined && points_adjustment !== null && String(points_adjustment).trim() !== ''
+      ? Number(points_adjustment)
+      : null;
+
+    if (nextRole !== undefined) {
+      if (!isAdmin) return fail(res, '仅管理员可修改角色', 403);
+      if (!['user', 'editor'].includes(nextRole)) return fail(res, '角色仅支持普通用户或编辑者');
+    }
+    if (pointsAdjustment !== null) {
+      if (!isAdmin) return fail(res, '仅管理员可调整积分', 403);
+      if (!Number.isInteger(pointsAdjustment)) return fail(res, '积分调整值必须为整数');
+      if (pointsAdjustment === 0) return fail(res, '积分调整值不能为 0');
+      const remark = points_remark != null ? String(points_remark).trim() : '';
+      if (!remark) return fail(res, '请填写积分调整备注');
+      if (remark.length > 100) return fail(res, '积分备注不能超过 100 个字符');
+    }
+
+    // 自己改自己：允许昵称、头像、邮箱、称号；不允许改角色/状态/积分
     const payload = isSelf
       ? { nickname, avatar_url, email, title }
-      : { nickname, avatar_url, email, status, role, title };
+      : { nickname, avatar_url, email, status, role: nextRole, title };
     const n = await userService.update(id, payload);
-    if (!n) return fail(res, '更新失败或无变更');
-    return success(res, { id }, '更新成功');
+
+    if (pointsAdjustment !== null) {
+      const targetUser = await userService.findById(id);
+      if (!targetUser) return fail(res, '用户不存在', 404);
+      if (targetUser.points + pointsAdjustment < 0) return fail(res, '调整后积分不能小于 0');
+      await pointsService.addPointsLog(id, pointsAdjustment, `${ADMIN_POINT_REASON_PREFIX}${String(points_remark).trim()}`);
+    }
+
+    if (!n && pointsAdjustment === null) return fail(res, '更新失败或无变更');
+    return success(res, { id }, pointsAdjustment !== null ? '更新成功，积分已调整' : '更新成功');
   } catch (e) {
     console.error(e);
     return error(res, '操作错误');
@@ -143,10 +173,19 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    if (Number(req.params.id) === Number(req.user?.id)) return fail(res, '无法删除自己');
-    const n = await userService.remove(req.params.id);
-    if (!n) return fail(res, '用户不存在');
-    return success(res, { id: req.params.id }, '删除成功');
+    const id = Number(req.params.id);
+    const hard = String(req.query.hard || req.body?.hard || '').trim() === '1';
+    if (id === Number(req.user?.id)) return fail(res, '无法删除自己');
+    const targetUser = await userService.findById(id);
+    if (!targetUser) return fail(res, '用户不存在');
+    if (hard) {
+      const n = await userService.remove(id);
+      if (!n) return fail(res, '用户不存在');
+      return success(res, { id }, '彻底删除成功');
+    }
+    const n = await userService.update(id, { status: 1, refresh_token: null, refresh_token_expires_at: null });
+    if (!n) return fail(res, '停用失败或无变更');
+    return success(res, { id }, '停用成功');
   } catch (e) {
     console.error(e);
     return error(res, '操作错误');
@@ -160,8 +199,9 @@ exports.loginUser = async (req, res) => {
     const username = req.body.username != null ? String(req.body.username).trim() : '';
     const password = decodePassword(req.body.password);
     if (!username) return fail(res, '用户名不能为空');
-    const user = await userService.findByUsername(username);
+    const user = await userService.findByUsername(username, { includeDisabled: true });
     if (!user) return fail(res, '用户名或密码错误');
+    if (Number(user.status) === 1) return fail(res, '账号已停用，请联系管理员', 403);
     const match = await bcrypt.compare(password, user.password);
     if (!match) return fail(res, '用户名或密码错误');
 

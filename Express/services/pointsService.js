@@ -127,6 +127,7 @@ async function getOrderById(id) {
   return row;
 }
 
+// 创建订单
 async function createOrder({ user_id, goods_id, quantity = 1, receiver_name, receiver_phone, receiver_address, user_remark }) {
   const goods = await getGoodsById(goods_id);
   if (!goods || goods.status !== 1) throw new Error('商品不存在或已下架');
@@ -160,6 +161,7 @@ async function createOrder({ user_id, goods_id, quantity = 1, receiver_name, rec
   return orderId;
 }
 
+// 更新订单状态
 async function updateOrderStatus(id, { status, logistics_company, logistics_no, admin_remark }) {
   const set = ['status = ?'];
   const values = [status];
@@ -189,6 +191,40 @@ async function addPointsLog(userId, change, reason) {
   await runQuery('UPDATE wz_users SET points = points + ? WHERE id = ?', [change, userId]);
 }
 
+async function getTodayPositivePointsByReasonPrefix(userId, reasonPrefix) {
+  const rows = await runQuery(
+    'SELECT COALESCE(SUM(`change`), 0) AS total FROM wz_user_points_log WHERE user_id = ? AND `change` > 0 AND reason LIKE ? AND DATE(created_at) = CURDATE()',
+    [userId, `${reasonPrefix}%`]
+  );
+  return Number(rows[0]?.total || 0);
+}
+
+async function addDailyCappedPointsLog(userId, change, reason, reasonPrefix, dailyLimit) {
+  const amount = Math.max(0, Number(change) || 0);
+  const limit = Math.max(0, Number(dailyLimit) || 0);
+  if (!amount || !limit) return 0;
+  const todayTotal = await getTodayPositivePointsByReasonPrefix(userId, reasonPrefix);
+  const remain = Math.max(0, limit - todayTotal);
+  const granted = Math.min(amount, remain);
+  if (granted > 0) {
+    await addPointsLog(userId, granted, reason);
+  }
+  return granted;
+}
+
+async function getLatestPointsLogByReasonPrefixes(userId, reasonPrefixes, options = {}) {
+  const prefixes = Array.isArray(reasonPrefixes) ? reasonPrefixes.filter(Boolean) : [];
+  if (!prefixes.length) return null;
+  const clauses = prefixes.map(() => 'reason LIKE ?');
+  const values = [userId, ...prefixes.map((prefix) => `${prefix}%`)];
+  let sql = `SELECT * FROM wz_user_points_log WHERE user_id = ? AND (${clauses.join(' OR ')})`;
+  if (options.positiveOnly) sql += ' AND `change` > 0';
+  if (options.negativeOnly) sql += ' AND `change` < 0';
+  sql += ' ORDER BY id DESC LIMIT 1';
+  const rows = await runQuery(sql, values);
+  return rows[0] || null;
+}
+
 /** 当日是否已有该原因的积分记录（用于每日首次登录等） */
 async function hasPointsLogToday(userId, reason) {
   const rows = await runQuery(
@@ -197,7 +233,7 @@ async function hasPointsLogToday(userId, reason) {
   );
   return rows.length > 0;
 }
-
+// 获取积分流水列表
 async function getPointsLogList(userId, { page = 1, pageSize = 20 } = {}) {
   const offset = (Number(page) - 1) * Number(pageSize);
   const countRow = await runQuery('SELECT COUNT(*) AS total FROM wz_user_points_log WHERE user_id = ?', [userId]);
@@ -207,6 +243,36 @@ async function getPointsLogList(userId, { page = 1, pageSize = 20 } = {}) {
   );
   list.forEach((r) => {
     r.created_at = r.created_at?.toLocaleString?.() ?? r.created_at;
+    const rawReason = r.reason ? String(r.reason).trim() : '';
+    const adminAdjustMatch = rawReason.match(/^admin_adjust(?:\s*[:：|-]\s*|\s+)?(.*)$/);
+    const articleLikedMatch = rawReason.match(/^article_liked:\d+:(.+)$/);
+    const articleUnlikedMatch = rawReason.match(/^article_unliked:\d+:(.+)$/);
+    const articlePublishMatch = rawReason.match(/^article_publish:\d+:(.+)$/);
+    const articleDeleteMatch = rawReason.match(/^article_delete:\d+:(.+)$/);
+    const commentApprovedMatch = rawReason.match(/^comment_approved:\d+:(.+)$/);
+    const commentRemovedMatch = rawReason.match(/^comment_removed:\d+:(.+)$/);
+    if (adminAdjustMatch) {
+      r.reason = 'admin_adjust';
+      r.remark = r.remark || adminAdjustMatch[1] || '';
+    } else if (articleLikedMatch) {
+      r.reason = 'article_liked';
+      r.remark = r.remark || articleLikedMatch[1] || '';
+    } else if (articleUnlikedMatch) {
+      r.reason = 'article_unliked';
+      r.remark = r.remark || articleUnlikedMatch[1] || '';
+    } else if (articlePublishMatch) {
+      r.reason = 'article_publish';
+      r.remark = r.remark || articlePublishMatch[1] || '';
+    } else if (articleDeleteMatch) {
+      r.reason = 'article_delete';
+      r.remark = r.remark || articleDeleteMatch[1] || '';
+    } else if (commentApprovedMatch) {
+      r.reason = 'comment_approved';
+      r.remark = r.remark || commentApprovedMatch[1] || '';
+    } else if (commentRemovedMatch) {
+      r.reason = 'comment_removed';
+      r.remark = r.remark || commentRemovedMatch[1] || '';
+    }
   });
   return { list, total: countRow[0].total };
 }
@@ -222,6 +288,8 @@ module.exports = {
   createOrder,
   updateOrderStatus,
   addPointsLog,
+  addDailyCappedPointsLog,
+  getLatestPointsLogByReasonPrefixes,
   hasPointsLogToday,
   getPointsLogList,
 };

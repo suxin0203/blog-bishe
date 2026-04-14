@@ -31,11 +31,11 @@
               </n-form-item>
               <n-form-item>
                 <n-button type="primary" block strong @click="login" class="loginbtn">登 录</n-button>
-                <div class="forgot-wrap">
-                  <n-button text type="primary" tag="a" @click.prevent="showForgotModal = true">忘记密码？</n-button>
-                </div>
               </n-form-item>
             </n-form>
+            <div class="forgot-wrap">
+              <n-button text type="primary" tag="a" @click.prevent="showForgotModal = true">忘记密码？</n-button>
+            </div>
           </n-tab-pane>
           <n-tab-pane name="register" tab="注册">
             <n-form :model="admin" :rules="rulesRegister" ref="formRefRegister" class="auth-form">
@@ -44,6 +44,9 @@
               </n-form-item>
               <n-form-item label="密码" path="password">
                 <n-input v-model:value="admin.password" placeholder="至少 4 个字符" type="password" @keyup.enter="register()" />
+              </n-form-item>
+              <n-form-item label="确认密码" path="confirmPassword">
+                <n-input v-model:value="admin.confirmPassword" placeholder="请再次输入密码" type="password" @keyup.enter="register()" />
               </n-form-item>
               <n-form-item label="邮箱" path="email">
                 <n-input v-model:value="admin.email" placeholder="用于找回密码，请填写有效邮箱" type="text" @keyup.enter="register()" />
@@ -62,6 +65,19 @@
             </n-form>
           </n-tab-pane>
         </n-tabs>
+        <div class="other-login">
+          <span class="other-login-label">其它登录方式</span>
+          <n-button quaternary size="small" class="wechat-btn" @click="openWechatQr">
+            <span class="wechat-icon">
+              <img
+                class="wechat-icon-img"
+                src="https://img.icons8.com/color/48/weixing.png"
+                alt="WeChat"
+              />
+            </span>
+            <span class="wechat-text">扫码登录 / 注册</span>
+          </n-button>
+        </div>
         </n-card>
       </div>
     </div>
@@ -94,14 +110,48 @@
         <n-button type="primary" block :loading="forgotLoading" @click="doForgotReset">确认重置</n-button>
       </div>
     </n-modal>
+    <n-modal v-model:show="showQrModal" preset="card" title="微信扫码登录 / 注册" style="width: 420px" :mask-closable="true">
+      <div class="qr-login">
+        <div class="qr-box">
+          <div v-if="qrLoading" class="qr-placeholder">
+            <n-spin size="large" />
+            <p>正在获取微信小程序码...</p>
+          </div>
+          <div v-else-if="qrError" class="qr-placeholder">
+            <p class="qr-error">{{ qrError }}</p>
+            <n-button size="medium" type="primary" strong @click="initQrLogin">重新获取二维码</n-button>
+          </div>
+          <div v-else>
+            <img v-if="qrImage" :src="qrImage" alt="微信小程序码" class="qr-image" />
+            <p class="qr-tip">
+              请使用微信扫描小程序码，按提示完成登录或注册
+              <n-tooltip trigger="hover">
+                <template #trigger>
+                  <span class="qr-help">?</span>
+                </template>
+                <div class="qr-help-content">
+                  <p>1. 已绑定账号：先在小程序内确认“允许在本次电脑登录”，再完成登录。</p>
+                  <p>2. 未绑定账号：可在小程序内注册新账号或绑定已有账号，完成后本页面会自动登录。</p>
+                </div>
+              </n-tooltip>
+            </p>
+            <p v-if="qrCountdown > 0" class="qr-countdown">二维码将在 {{ qrCountdown }} 秒后过期</p>
+            <p v-else class="qr-countdown qr-countdown-expired">二维码已过期，请点击下方按钮刷新</p>
+            <div class="qr-actions">
+              <n-button size="medium" type="primary" strong @click="initQrLogin">刷新二维码</n-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </n-modal>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, inject, onMounted, watch } from "vue";
+import { reactive, ref, inject, onMounted, onUnmounted, watch } from "vue";
 import { AdminStore } from "../stores/AdminStore";
 import { router, routes } from "@/common/router.js";
-import { getCaptcha, userLogin, userRegister, getForgotEmail, forgotVerify, forgotReset } from "../api/api";
+import { getCaptcha, userLogin, userRegister, getForgotEmail, forgotVerify, forgotReset, createQrLoginSession, getQrLoginSessionStatus } from "../api/api";
 import { base64Encode, captchaMd5 } from "@/utils/encode";
 
 const axios = inject("axios");
@@ -111,6 +161,16 @@ const adminStore = AdminStore();
 const formRef = ref();
 const formRefRegister = ref();
 const activeTab = ref("login");
+
+const showQrModal = ref(false);
+
+const qrImage = ref("");
+const qrSceneId = ref("");
+const qrCountdown = ref(0);
+const qrTimer = ref(null);
+const qrPollTimer = ref(null);
+const qrLoading = ref(false);
+const qrError = ref("");
 
 const showForgotModal = ref(false);
 const forgotStep = ref(1);
@@ -219,9 +279,119 @@ let num2 = ref(0);
 const admin = reactive({
   username: localStorage.getItem("username") || "",
   password: localStorage.getItem("password") ? atob(localStorage.getItem("password")) : "",
+  confirmPassword: "",
   email: "",
   remember: !!localStorage.getItem("remember") || false,
   countresult: "",
+});
+
+const clearQrTimers = () => {
+  if (qrTimer.value) {
+    clearInterval(qrTimer.value);
+    qrTimer.value = null;
+  }
+  if (qrPollTimer.value) {
+    clearInterval(qrPollTimer.value);
+    qrPollTimer.value = null;
+  }
+};
+
+const startQrCountdown = (expiresAt) => {
+  clearQrTimers();
+  const exp = new Date(expiresAt).getTime();
+  const update = () => {
+    const diff = Math.max(0, Math.floor((exp - Date.now()) / 1000));
+    qrCountdown.value = diff;
+    if (diff <= 0) {
+      clearQrTimers();
+    }
+  };
+  update();
+  qrTimer.value = setInterval(update, 1000);
+};
+
+const startQrPolling = () => {
+  if (!qrSceneId.value) return;
+  if (qrPollTimer.value) {
+    clearInterval(qrPollTimer.value);
+  }
+  const poll = async () => {
+    if (!qrSceneId.value) return;
+    try {
+      const res = await getQrLoginSessionStatus(qrSceneId.value);
+      if (!res) return;
+      if (res.code === 410 || res.data?.status === "expired") {
+        qrError.value = res.message || "二维码已过期，请刷新";
+        qrSceneId.value = "";
+        qrCountdown.value = 0;
+        clearQrTimers();
+        return;
+      }
+      if (res.code === 200 && res.data?.status === "confirmed" && res.data.token) {
+        const { token, refreshToken, user } = res.data;
+        if (token && user) {
+          adminStore.setToken(token, user);
+          if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+          message.success("扫码登录成功，欢迎回来");
+          qrSceneId.value = "";
+          clearQrTimers();
+          router.push("/dashboard");
+        }
+      }
+    } catch (e) {
+      // 忽略单次轮询错误，等待下次
+    }
+  };
+  poll();
+  qrPollTimer.value = setInterval(poll, 2500);
+};
+
+const initQrLogin = async () => {
+  qrLoading.value = true;
+  qrError.value = "";
+  qrImage.value = "";
+  qrSceneId.value = "";
+  clearQrTimers();
+  try {
+    const res = await createQrLoginSession({ channel: "pc" });
+    if (res.code === 200 && res.data?.sceneId && res.data?.miniProgramCode) {
+      qrSceneId.value = res.data.sceneId;
+      qrImage.value = res.data.miniProgramCode;
+      if (res.data.expiresAt) {
+        startQrCountdown(res.data.expiresAt);
+      }
+      startQrPolling();
+    } else {
+      qrError.value = res.message || "获取小程序码失败，请稍后重试";
+    }
+  } catch (e) {
+    const rawMsg = e?.response?.data?.message || e?.message || "";
+    let niceMsg = "获取小程序码失败，请稍后重试";
+    if (typeof rawMsg === "string" && rawMsg.toLowerCase().includes("timeout")) {
+      niceMsg = "获取小程序码超时，请检查网络后重试";
+    } else if (rawMsg) {
+      niceMsg = rawMsg;
+    }
+    qrError.value = niceMsg;
+  }
+  qrLoading.value = false;
+};
+
+const openWechatQr = () => {
+  showQrModal.value = true;
+  if (!qrSceneId.value) {
+    initQrLogin();
+  }
+};
+
+watch(activeTab, (v) => {
+  if (v !== "login" && v !== "register") {
+    clearQrTimers();
+  }
+});
+
+onUnmounted(() => {
+  clearQrTimers();
 });
 
 // 从后端获取验证码（点击刷新或首次加载）
@@ -260,6 +430,10 @@ const rulesRegister = {
   ],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 4, message: "密码至少 4 个字符", trigger: "blur" },
+  ],
+  confirmPassword: [
+    { required: true, message: "请再次输入密码", trigger: "blur" },
     { min: 4, message: "密码至少 4 个字符", trigger: "blur" },
   ],
   email: [
@@ -304,7 +478,13 @@ const login = async (e) => {
 const register = async () => {
   formRefRegister.value?.validate(async (errors) => {
     if (errors) return;
-    const { username, password, email, countresult } = admin;
+    const { username, password, confirmPassword, email, countresult } = admin;
+    const pw = String(password || "").trim();
+    const pwConfirm = String(confirmPassword || "").trim();
+    if (pw !== pwConfirm) {
+      message.error("两次输入的密码不一致");
+      return;
+    }
     if (!email || !String(email).trim()) {
       message.error("请填写邮箱，便于后续找回密码");
       return;
@@ -420,9 +600,112 @@ const register = async () => {
 .auth-form :deep(.n-form-item:last-of-type) {
   margin-bottom: 0;
 }
-.forgot-wrap {
-  margin-top: 12px;
+.other-login {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.other-login-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+.wechat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.wechat-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #22c55e;
+  color: #fff;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wechat-icon-img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.wechat-text {
+  font-size: 13px;
+  color: #16a34a;
+}
+.qr-login {
+  margin-top: 8px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.qr-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 0;
+}
+.qr-image {
+  width: 360px;
+  height: 360px;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.35);
+  display: block;
+  margin: 0 auto;
+}
+.qr-placeholder {
+  width: 200px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+}
+.qr-tip {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #64748b;
   text-align: center;
+}
+.qr-countdown {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #0f766e;
+  text-align: center;
+}
+.qr-countdown-expired {
+  color: #b91c1c;
+}
+.qr-actions {
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+}
+.qr-error {
+  font-size: 13px;
+  color: #b91c1c;
+  text-align: center;
+}
+.qr-desc {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+.forgot-wrap {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
 }
 .forgot-step .forgot-tip {
   margin: 8px 0 12px 0;

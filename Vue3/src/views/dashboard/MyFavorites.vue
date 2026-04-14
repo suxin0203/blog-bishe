@@ -27,6 +27,7 @@
                 <template #footer>
                   <n-space align="center" wrap :size="10">
                     <n-tag size="small" :bordered="false">{{ item.category_name || '未分类' }}</n-tag>
+                    <n-tag size="small" type="default" :bordered="false">作者：{{ item.author_name || '用户已注销' }}</n-tag>
                     <span class="stat-item">阅读 {{ item.view_count ?? 0 }}</span>
                     <span class="stat-item">点赞 {{ item.like_count ?? 0 }}</span>
                     <span class="stat-item">评论 {{ item.comment_count ?? 0 }}</span>

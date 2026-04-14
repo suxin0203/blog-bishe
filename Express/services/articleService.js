@@ -42,7 +42,7 @@ async function getList({ page = 1, pageSize = 8, keyword = '', category_id, tag_
   const countSql = `SELECT COUNT(*) AS total FROM wz_articles a WHERE ${where}`;
   const listSql = `
     SELECT a.id, a.title, a.summary, a.cover_url, a.category_id, a.author_id, a.status, a.view_count, a.like_count, a.comment_count, a.favorite_count, a.created_at, a.updated_at,
-           c.name AS category_name, u.nickname AS author_name
+           c.name AS category_name, COALESCE(u.nickname, '用户已注销') AS author_name
     FROM wz_articles a
     LEFT JOIN wz_categories c ON c.id = a.category_id
     LEFT JOIN wz_users u ON u.id = a.author_id
@@ -67,7 +67,9 @@ async function getList({ page = 1, pageSize = 8, keyword = '', category_id, tag_
 async function getById(id, options = {}) {
   const { incrementView = false, source } = options;
   let sql = `
-    SELECT a.*, c.name AS category_name, u.nickname AS author_name, u.avatar_url AS author_avatar
+    SELECT a.*, c.name AS category_name,
+           COALESCE(u.nickname, '用户已注销') AS author_name,
+           u.avatar_url AS author_avatar
     FROM wz_articles a
     LEFT JOIN wz_categories c ON c.id = a.category_id
     LEFT JOIN wz_users u ON u.id = a.author_id

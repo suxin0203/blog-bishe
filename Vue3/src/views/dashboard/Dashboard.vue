@@ -65,6 +65,9 @@
         </div>
         <div class="topbar-actions">
           <n-button quaternary type="error" size="small" @click="toLogout()">
+            <template #icon>
+              <n-icon :component="LogOutOutline" size="18" />
+            </template>
             退出登录
           </n-button>
         </div>
@@ -95,7 +98,7 @@
         </div>
       </main>
     </div>
-    <n-drawer v-model:show="showPointsLog" :width="400" placement="right">
+    <n-drawer v-model:show="showPointsLog" :width="520" placement="right">
       <n-drawer-content title="积分流水" closable>
         <n-spin :show="pointsLogLoading">
           <n-list v-if="pointsLogList.length">
@@ -105,7 +108,7 @@
                   <span :style="{ color: item.change >= 0 ? '#18a058' : '#d03050' }">
                     {{ item.change >= 0 ? '+' : '' }}{{ item.change }}
                   </span>
-                  <n-text depth="2" style="margin-left: 8px">{{ reasonLabel(item.reason) }}</n-text>
+                  <n-text depth="2" style="margin-left: 8px">{{ reasonLabel(item) }}</n-text>
                 </template>
                 <template #header-extra>{{ item.created_at }}</template>
               </n-thing>
@@ -157,6 +160,7 @@ import {
   StatsChartOutline,
   CartOutline,
   HeartOutline,
+  LogOutOutline,
 } from "@vicons/ionicons5";
 
 const axios = inject("axios");
@@ -234,9 +238,30 @@ async function saveProfile() {
   }
 }
 
-function reasonLabel(reason) {
-  const map = { daily_login: "每日登录", comment: "评论通过", like: "点赞", redeem: "兑换", redeem_goods: "积分兑换", refund: "退款" };
-  return map[reason] || reason || "-";
+function reasonLabel(itemOrReason) {
+  const item = typeof itemOrReason === "object" && itemOrReason !== null
+    ? itemOrReason
+    : { reason: itemOrReason, remark: "" };
+  const map = {
+    daily_login: "每日登录",
+    comment: "评论通过",
+    like: "点赞",
+    like_cancel: "取消点赞",
+    article_liked: "文章获赞",
+    article_unliked: "文章取消获赞",
+    article_publish: "发布文章",
+    article_delete: "删除文章",
+    comment_approved: "评论审核通过",
+    comment_removed: "删除已通过评论",
+    redeem: "兑换",
+    redeem_goods: "积分兑换",
+    refund: "退款",
+    admin_adjust: "管理员调整",
+  };
+  const label = map[item.reason] || item.reason || "-";
+  const actionReasons = new Set(["article_liked", "article_unliked", "article_publish", "article_delete", "comment_approved", "comment_removed"]);
+  if (item.remark && actionReasons.has(item.reason)) return `${label}《${item.remark}》`;
+  return item.remark ? `${label}：${item.remark}` : label;
 }
 
 async function loadPointsLog() {

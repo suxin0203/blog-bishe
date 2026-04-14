@@ -71,6 +71,7 @@
                     <n-tag v-if="categoryMap[blog.category_id]" :bordered="false" size="small" type="success">
                       {{ categoryMap[blog.category_id] }}
                     </n-tag>
+                    <span class="item-author">作者：{{ blog.author_name || '用户已注销' }}</span>
                     <span class="item-date">{{ blog.created_at }}</span>
                     <span class="item-stats">
                       {{ blog.view_count ?? 0 }} 阅读 · {{ blog.like_count ?? 0 }} 赞

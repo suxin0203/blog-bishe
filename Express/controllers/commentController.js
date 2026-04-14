@@ -2,6 +2,11 @@ const commentService = require('../services/commentService');
 const otherswitchService = require('../services/otherswitchService');
 const { success, fail, error } = require('../common/response');
 
+const COMMENT_APPROVE_POINTS = 5;
+const COMMENT_APPROVE_DAILY_LIMIT = 50;
+const COMMENT_APPROVE_REASON_PREFIX = 'comment_approved:';
+const COMMENT_REMOVE_REASON_PREFIX = 'comment_removed:';
+
 /** 从配置读取敏感词列表（JSON 数组），并对内容做替换（敏感词替换为 ***） */
 async function filterSensitiveWords(content) {
   if (!content || typeof content !== 'string') return content;
@@ -80,15 +85,34 @@ exports.updateComment = async (req, res) => {
     const { content, status } = req.body;
     const comment = await commentService.getById(id);
     if (!comment) return fail(res, '评论不存在');
+    let article = null;
     if (status !== undefined) {
       const articleService = require('../services/articleService');
-      const article = await articleService.getById(comment.article_id);
+      article = await articleService.getById(comment.article_id);
       const isAdmin = req.user?.is_root === 1;
       const isAuthor = article && Number(article.author_id) === Number(req.user?.id);
       if (!isAdmin && !isAuthor) return fail(res, '无权限审核该评论', 403);
     }
     const n = await commentService.update(id, { content, status });
     if (!n) return fail(res, '更新失败或无变更');
+    if (status !== undefined) {
+      const latest = await commentService.getById(id);
+      if (latest?.status === 1 && comment.status !== 1 && latest.user_id) {
+        try {
+          const pointsService = require('../services/pointsService');
+          const articleTitle = String(article?.title || '').trim() || `文章#${latest.article_id}`;
+          await pointsService.addDailyCappedPointsLog(
+            latest.user_id,
+            COMMENT_APPROVE_POINTS,
+            `${COMMENT_APPROVE_REASON_PREFIX}${id}:${articleTitle}`,
+            COMMENT_APPROVE_REASON_PREFIX,
+            COMMENT_APPROVE_DAILY_LIMIT
+          );
+        } catch (pointsErr) {
+          console.error('points comment_approved', pointsErr);
+        }
+      }
+    }
     return success(res, { id }, '更新成功');
   } catch (e) {
     console.error(e);
@@ -99,8 +123,24 @@ exports.updateComment = async (req, res) => {
 exports.deleteComment = async (req, res) => {
   try {
     const id = req.params.id;
+    const comment = await commentService.getById(id);
+    if (!comment) return fail(res, '评论不存在');
     const n = await commentService.remove(id);
     if (!n) return fail(res, '评论不存在');
+    if (comment.status === 1 && comment.user_id) {
+      try {
+        const pointsService = require('../services/pointsService');
+        const articleService = require('../services/articleService');
+        const article = await articleService.getById(comment.article_id);
+        const articleTitle = String(article?.title || '').trim() || `文章#${comment.article_id}`;
+        const rewardLog = await pointsService.getLatestPointsLogByReasonPrefixes(comment.user_id, [COMMENT_APPROVE_REASON_PREFIX], { positiveOnly: true });
+        if (rewardLog && rewardLog.reason === `${COMMENT_APPROVE_REASON_PREFIX}${id}:${articleTitle}`) {
+          await pointsService.addPointsLog(comment.user_id, -Math.abs(Number(rewardLog.change) || COMMENT_APPROVE_POINTS), `${COMMENT_REMOVE_REASON_PREFIX}${id}:${articleTitle}`);
+        }
+      } catch (pointsErr) {
+        console.error('points comment_removed', pointsErr);
+      }
+    }
     return success(res, { id }, '删除成功');
   } catch (e) {
     console.error(e);

@@ -43,10 +43,11 @@ async function getUserFavorites(userId, { page = 1, pageSize = 10, keyword } = {
   const offset = (Number(page) - 1) * Number(pageSize);
   const rows = await runQuery(
     `SELECT a.id, a.title, a.summary, a.cover_url, a.view_count, a.like_count, a.comment_count, a.favorite_count, a.created_at,
-            c.name AS category_name, f.created_at AS favorited_at
+            c.name AS category_name, COALESCE(u.nickname, '用户已注销') AS author_name, f.created_at AS favorited_at
      FROM wz_article_favorites f
      INNER JOIN wz_articles a ON a.id = f.article_id
      LEFT JOIN wz_categories c ON c.id = a.category_id
+     LEFT JOIN wz_users u ON u.id = a.author_id
      WHERE ${where}
      ORDER BY f.created_at DESC
      LIMIT ?, ?`,

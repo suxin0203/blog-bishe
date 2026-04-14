@@ -66,6 +66,12 @@ const reasonMap = {
   comment: "评论",
   like: "点赞文章",
   like_cancel: "取消点赞",
+  article_liked: "文章获赞",
+  article_unliked: "文章取消获赞",
+  article_publish: "发布文章",
+  article_delete: "删除文章",
+  comment_approved: "评论审核通过",
+  comment_removed: "删除已通过评论",
   redeem_goods: "兑换商品",
   admin_adjust: "管理员调整",
 };
@@ -81,7 +87,12 @@ const columns = [
       return h("span", { style: { color: isPlus ? "#18a058" : "#d03050", fontWeight: 600 } }, isPlus ? `+${n}` : String(n));
     },
   },
-  { title: "原因", key: "reason", width: 120, render: (r) => reasonMap[r.reason] || r.reason || "—" },
+  { title: "原因", key: "reason", width: 220, render: (r) => {
+    const label = reasonMap[r.reason] || r.reason || "—";
+    const actionReasons = new Set(["article_liked", "article_unliked", "article_publish", "article_delete", "comment_approved", "comment_removed"]);
+    if (r.remark && actionReasons.has(r.reason)) return `${label}《${r.remark}》`;
+    return r.remark ? `${label}：${r.remark}` : label;
+  } },
   { title: "时间", key: "created_at", width: 165 },
 ];
 

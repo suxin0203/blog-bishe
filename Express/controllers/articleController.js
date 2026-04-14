@@ -1,6 +1,12 @@
 const axios = require('axios');
 const articleService = require('../services/articleService');
+const pointsService = require('../services/pointsService');
 const { success, fail, error } = require('../common/response');
+
+const ARTICLE_PUBLISH_POINTS = 10;
+const ARTICLE_PUBLISH_DAILY_LIMIT = 100;
+const ARTICLE_PUBLISH_REASON_PREFIX = 'article_publish:';
+const ARTICLE_DELETE_REASON_PREFIX = 'article_delete:';
 
 /** 时间归档：按年-月聚合列表，用于归档页 */
 exports.getArchive = async (req, res) => {
@@ -93,6 +99,18 @@ exports.createArticle = async (req, res) => {
       status,
       tag_ids: Array.isArray(tag_ids) ? tag_ids : undefined,
     });
+    try {
+      const articleTitle = String(title || '').trim() || `文章#${id}`;
+      await pointsService.addDailyCappedPointsLog(
+        author_id,
+        ARTICLE_PUBLISH_POINTS,
+        `${ARTICLE_PUBLISH_REASON_PREFIX}${id}:${articleTitle}`,
+        ARTICLE_PUBLISH_REASON_PREFIX,
+        ARTICLE_PUBLISH_DAILY_LIMIT
+      );
+    } catch (pointsErr) {
+      console.error('points article_publish', pointsErr);
+    }
     return success(res, { id, title }, '创建成功');
   } catch (e) {
     console.error(e);
@@ -128,15 +146,31 @@ exports.updateArticle = async (req, res) => {
 exports.deleteArticle = async (req, res) => {
   try {
     const id = req.params.id;
+    const article = await articleService.getById(id);
+    if (!article) return fail(res, '文章不存在');
     if (req.user?.role === 'editor') {
-      const article = await articleService.getById(id);
-      if (!article || article.author_id !== req.user.id) return fail(res, '无权限删除该文章', 403);
+      if (article.author_id !== req.user.id) return fail(res, '无权限删除该文章', 403);
     }
     const soft = req.query.soft !== '0' && req.query.soft !== 'false';
     const n = soft
       ? await articleService.softDelete(id)
       : await articleService.remove(id);
     if (!n) return fail(res, '文章不存在');
+    if (article.author_id) {
+      try {
+        const rewardLog = await pointsService.getLatestPointsLogByReasonPrefixes(
+          article.author_id,
+          [ARTICLE_PUBLISH_REASON_PREFIX],
+          { positiveOnly: true }
+        );
+        const rewardTitle = String(article.title || '').trim() || `文章#${id}`;
+        if (rewardLog && rewardLog.reason === `${ARTICLE_PUBLISH_REASON_PREFIX}${id}:${rewardTitle}`) {
+          await pointsService.addPointsLog(article.author_id, -Math.abs(Number(rewardLog.change) || ARTICLE_PUBLISH_POINTS), `${ARTICLE_DELETE_REASON_PREFIX}${id}:${rewardTitle}`);
+        }
+      } catch (pointsErr) {
+        console.error('points article_delete', pointsErr);
+      }
+    }
     return success(res, { id }, soft ? '已移入回收站' : '删除成功');
   } catch (e) {
     console.error(e);
