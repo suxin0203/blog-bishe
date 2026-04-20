@@ -10,7 +10,7 @@ module.exports = {
     version: '1.0.0',
   },
   servers: [
-    { url: 'http://localhost:8020', description: '本地开发' },
+    { url: 'http://localhost:8021', description: '本地开发' },
   ],
   tags: [
     { name: '用户', description: '注册、登录、用户信息' },

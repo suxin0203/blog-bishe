@@ -37,6 +37,11 @@ let routes = [
     component: () => import("@/views/MyOrders.vue"),
   },
   {
+    path: "/my-favorites",
+    name: "myFavorites",
+    component: () => import("@/views/dashboard/MyFavorites.vue"),
+  },
+  {
     path: "/my-points-log",
     name: "myPointsLog",
     component: () => import("@/views/MyPointsLog.vue"),

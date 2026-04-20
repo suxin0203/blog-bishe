@@ -2,6 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
+const getPublicBaseUrl = (req) => {
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  const forwardedHost = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim();
+  const protocol = forwardedProto || req.protocol || 'http';
+  const host = forwardedHost || req.get('host') || '';
+  return host ? `${protocol}://${host}` : '';
+};
+
 // 获取当前日期，格式为YYYYMMDD
 const getCurrentDate = () => {
   const now = new Date();
@@ -44,7 +52,7 @@ exports.richEditorUpload = async (req, res, next) => {
       data: {
         url: ret_files[0], // 图片 src ，必须
         alt: '这是似乎是一张图片', // 图片名称，非必须
-        href: `http://api.suxin23.cn${ret_files[0]}`, // 图片的链接，非必须
+        href: `${getPublicBaseUrl(req)}${ret_files[0]}`, // 图片的链接，非必须
       },
     });
   } catch (error) {
@@ -86,7 +94,7 @@ exports.lbtUpload = async (req, res, next) => {
       "isShow": true,
       "data": {
         "url": ret_files[0], // 图片 src ，必须
-        "href": `http://api.suxin23.cn/${ret_files[0]}` // 图片的链接，非必须
+        "href": `${getPublicBaseUrl(req)}/${ret_files[0]}` // 图片的链接，非必须
       }
     }
   )
@@ -107,7 +115,8 @@ exports.getImageList = (req, res) => {
         const fileExt = path.extname(file);
         if (imageExtensions.includes(fileExt.toLowerCase())) {
           const fileName = file.substring(0, file.lastIndexOf('.'));
-          const fileUrl = `https://api.suxin23.cn/upload/lbt/${file}`;
+          const baseUrl = getPublicBaseUrl(req);
+          const fileUrl = `${baseUrl}/upload/lbt/${file}`;
 
           images.push({
             id: fileName,

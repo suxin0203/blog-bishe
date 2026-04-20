@@ -354,9 +354,17 @@ const initQrLogin = async () => {
   clearQrTimers();
   try {
     const res = await createQrLoginSession({ channel: "pc" });
-    if (res.code === 200 && res.data?.sceneId && res.data?.miniProgramCode) {
+    if (res.code === 200 && res.data?.sceneId) {
       qrSceneId.value = res.data.sceneId;
-      qrImage.value = res.data.miniProgramCode;
+      // Android 微信/QQ WebView 对 data:image/* base64 有时不渲染/缓存异常，优先用后端 PNG 地址
+      const base = import.meta.env.VITE_BASE_URL || "";
+      if (base) {
+        const t = Date.now();
+        qrImage.value = `${base}/qr-login/session/${encodeURIComponent(qrSceneId.value)}/code.png?t=${t}`;
+      } else {
+        // 兜底：仍使用后端返回的 dataURL
+        qrImage.value = res.data.miniProgramCode || "";
+      }
       if (res.data.expiresAt) {
         startQrCountdown(res.data.expiresAt);
       }

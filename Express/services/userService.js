@@ -4,7 +4,7 @@ async function findByUsername(username, options = {}) {
   const includeDisabled = options.includeDisabled === true;
   const sql = includeDisabled
     ? 'SELECT * FROM wz_users WHERE username = ? LIMIT 1'
-    : 'SELECT * FROM wz_users WHERE username = ? AND (status IS NULL OR status = 0) LIMIT 1';
+    : 'SELECT * FROM wz_users WHERE username = ? AND (status IS NULL OR status = 1) LIMIT 1';
   const rows = await runQuery(sql, [username]);
   return rows[0] || null;
 }
@@ -28,6 +28,12 @@ async function findAll(opts = {}) {
     where += ' AND status = ?';
     values.push(status);
   }
+  // --------
+  if (opts.role) {
+    where += ' AND role = ?';
+    values.push(opts.role);
+  }
+  // ----------
   if (opts.keyword && String(opts.keyword).trim()) {
     const k = `%${String(opts.keyword).trim()}%`;
     where += ' AND (username LIKE ? OR nickname LIKE ? OR title LIKE ?)';
@@ -40,11 +46,11 @@ async function findAll(opts = {}) {
   return runQuery(sql, values);
 }
 
-async function create({ username, password, email = null, nickname = null, role = 'user' }) {
+async function create({ username, password, email = null, nickname = null, role = 'user', status = 1 }) {
   const is_root = role === 'admin' ? 1 : 0;
   await runQuery(
-    'INSERT INTO wz_users (username, password, email, nickname, role, is_root) VALUES (?, ?, ?, ?, ?, ?)',
-    [username, password, email, nickname, role, is_root]
+    'INSERT INTO wz_users (username, password, email, nickname, role, is_root, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [username, password, email, nickname, role, is_root, status]
   );
   const rows = await runQuery('SELECT LAST_INSERT_ID() AS id');
   return rows[0]?.id;

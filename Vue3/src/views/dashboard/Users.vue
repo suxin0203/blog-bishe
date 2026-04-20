@@ -4,8 +4,8 @@
     <template #header-extra>
       <n-space align="center" :size="8">
         <n-radio-group v-model:value="userStatusFilter" size="small" @update:value="onStatusFilterChange">
-          <n-radio-button :value="0">正常用户</n-radio-button>
-          <n-radio-button :value="1">已停用</n-radio-button>
+          <n-radio-button :value="1">正常用户</n-radio-button>
+          <n-radio-button :value="0">已停用</n-radio-button>
         </n-radio-group>
         <n-input
           v-model:value="userKeyword"
@@ -188,7 +188,7 @@ const adminStore = AdminStore();
 
 const categoryList = ref([]);
 const userKeyword = ref("");
-const userStatusFilter = ref(0);
+const userStatusFilter = ref(1);
 const showAddModal = ref(false);
 const showUpdateModal = ref(false);
 const userPointsLogs = ref([]);
@@ -317,7 +317,7 @@ const userColumns = [
     title: "状态",
     key: "status",
     width: 80,
-    render: (r) => h(NTag, { size: "small", type: Number(r.status) === 1 ? "warning" : "success" }, () => Number(r.status) === 1 ? "停用" : "正常"),
+    render: (r) => h(NTag, { size: "small", type: Number(r.status) === 0 ? "warning" : "success" }, () => Number(r.status) === 0 ? "停用" : "正常"),
   },
   { title: "最后登录", key: "last_login_at", width: 165, ellipsis: { tooltip: true }, render: (r) => r.last_login_at || "—" },
   {
@@ -328,7 +328,7 @@ const userColumns = [
     render: (r) =>
       h(NSpace, null, [
         h(NButton, { size: "small", tertiary: true, type: "primary", onClick: () => toUpdate(r) }, { default: () => "修改" }),
-        Number(r.status) === 1
+        Number(r.status) === 0
           ? h(NButton, { size: "small", tertiary: true, type: "warning", onClick: () => enableUser(r) }, { default: () => "启用" })
           : h(NButton, { size: "small", tertiary: true, type: "warning", onClick: () => disableUser(r) }, { default: () => "停用" }),
         h(NButton, { size: "small", tertiary: true, type: "error", onClick: () => deleteUser(r) }, { default: () => "彻底删除" }),
@@ -414,7 +414,7 @@ const update = async () => {
     nickname: updateUserData.nickname,
     avatar_url: updateUserData.avatar_url,
     title: updateUserData.title,
-    status: userStatusFilter.value === 1 ? 1 : 0,
+    status: userStatusFilter.value === 0 ? 0 : 1,
   };
   if (adminStore.is_root) {
     payload.role = updateUserData.role;
@@ -468,7 +468,7 @@ const disableUser = async (category) => {
 };
 
 const enableUser = async (category) => {
-  const res = await updateUserInfo(category.id, { status: 0 });
+  const res = await updateUserInfo(category.id, { status: 1 });
   if (res.code === 200) {
     message.success("启用成功");
     getAllUsersList();

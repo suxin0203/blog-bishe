@@ -77,12 +77,17 @@ exports.createSession = async (req, res) => {
     );
   } catch (e) {
     console.error(e);
+    const isProd = process.env.NODE_ENV === 'production';
     if (e.message && e.message.includes('微信小程序配置')) {
       return fail(
         res,
         '微信小程序配置缺失，请补充 WX_MINIAPP_APPID / WX_MINIAPP_SECRET 环境变量后重试',
         500
       );
+    }
+    // 非生产环境直接返回错误详情，便于排查“不同环境结果不同”的问题
+    if (!isProd && e?.message) {
+      return fail(res, `创建扫码登录会话失败：${e.message}`, 500);
     }
     return error(res, '创建扫码登录会话失败');
   }
@@ -146,6 +151,28 @@ exports.getSessionStatus = async (req, res) => {
   } catch (e) {
     console.error(e);
     return error(res, '查询扫码会话失败');
+  }
+};
+
+// 返回 PNG 二进制小程序码（用于解决部分 Android 微信/QQ WebView 不渲染 dataURL 的问题）
+exports.getMiniProgramCodePng = async (req, res) => {
+  try {
+    const sceneId = String(req.params.sceneId || '').trim();
+    if (!sceneId) return fail(res, 'sceneId 不能为空');
+    const pngBuf = await wechatMiniService.getPcLoginMiniProgramCodeBuffer(sceneId);
+    res.setHeader('Content-Type', 'image/png');
+    // 避免 Android WebView/代理缓存导致“刷新不出来”
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    return res.status(200).send(pngBuf);
+  } catch (e) {
+    console.error(e);
+    const isProd = process.env.NODE_ENV === 'production';
+    if (!isProd && e?.message) {
+      return fail(res, `获取小程序码失败：${e.message}`, 500);
+    }
+    return error(res, '获取小程序码失败');
   }
 };
 

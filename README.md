@@ -1,7 +1,7 @@
 # 基于 Vue3 + Naive UI 的极简博客（文栈博客）
 
-- **预览地址**：[Suxin's blog](http://blog.suxin23.cn)
-- **预览接口**：[api接口](https://api.suxin23.cn)
+- **预览地址**：[Suxin's blog](http://wzblog.suxin23.cn)
+- **预览接口**：[api接口](https://wzapi.suxin23.cn)
 
 ## 项目结构
 

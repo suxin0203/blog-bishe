@@ -103,10 +103,16 @@ exports.getCurrentUser = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
+    // -------
+    // 新增角色筛选参数：前端可传 ?role=user / ?role=editor / ?role=admin
+    // 不传时为 undefined，service 层就不会拼接该筛选条件
+    const role = req.query.role ? String(req.query.role).trim().toLowerCase() : undefined;
+    // -------
     const sort = req.query.sort === 'points' ? 'points' : undefined;
     const keyword = req.query.keyword;
     const status = req.query.status !== undefined && req.query.status !== '' ? Number(req.query.status) : undefined;
-    const list = await userService.findAll({ sort, keyword, status });
+    // 把 role 一起传给 service，由 service 决定是否追加 SQL 条件
+    const list = await userService.findAll({ sort, keyword, status, role });
     list.forEach(formatUser);
     return success(res, list, '获取用户列表成功');
   } catch (e) {
@@ -183,7 +189,7 @@ exports.deleteUser = async (req, res) => {
       if (!n) return fail(res, '用户不存在');
       return success(res, { id }, '彻底删除成功');
     }
-    const n = await userService.update(id, { status: 1, refresh_token: null, refresh_token_expires_at: null });
+    const n = await userService.update(id, { status: 0, refresh_token: null, refresh_token_expires_at: null });
     if (!n) return fail(res, '停用失败或无变更');
     return success(res, { id }, '停用成功');
   } catch (e) {
@@ -201,7 +207,7 @@ exports.loginUser = async (req, res) => {
     if (!username) return fail(res, '用户名不能为空');
     const user = await userService.findByUsername(username, { includeDisabled: true });
     if (!user) return fail(res, '用户名或密码错误');
-    if (Number(user.status) === 1) return fail(res, '账号已停用，请联系管理员', 403);
+    if (Number(user.status) === 0) return fail(res, '账号已停用，请联系管理员', 403);
     const match = await bcrypt.compare(password, user.password);
     if (!match) return fail(res, '用户名或密码错误');
 

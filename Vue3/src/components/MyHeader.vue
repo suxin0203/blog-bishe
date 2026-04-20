@@ -109,6 +109,7 @@ const profileForm = ref({ nickname: "", avatar_url: "" });
 
 const avatarMenuOptions = computed(() => {
   const opts = [{ label: "编辑资料", key: "profile" }];
+  opts.push({ label: "我的收藏", key: "favorites" });
   opts.push({ label: "兑换记录", key: "orders" });
   opts.push({ label: "积分记录", key: "pointsLog" });
   if (adminStore.is_root || adminStore.role === "editor") {
@@ -125,6 +126,8 @@ const handleAvatarMenu = (key) => {
       avatar_url: adminStore.avatar_url || "",
     };
     showProfileModal.value = true;
+  } else if (key === "favorites") {
+    router.push("/my-favorites");
   } else if (key === "orders") {
     router.push("/my-orders");
   } else if (key === "pointsLog") {

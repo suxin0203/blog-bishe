@@ -24,8 +24,8 @@ import {
   ref,
   shallowRef,
   onMounted,
-  reactive,
-  inject
+  inject,
+  watch
 } from "vue";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
 
@@ -74,14 +74,37 @@ editorConfig.MENU_CONF["insertImage"] = {
 // 内容 HTML
 const valueHtml = ref("");
 let initFinished = false;
-const emit = defineEmits(["update:model-value"]);
+const emit = defineEmits(["update:modelValue"]);
+const syncingFromOutside = ref(false);
 
 onMounted(() => {
   setTimeout(() => {
+    // 首次初始化：把外部值灌入编辑器
     valueHtml.value = props.modelValue;
+    try {
+      editorRef.value?.setHtml?.(valueHtml.value || "");
+    } catch (_) {}
     initFinished = true;
   }, 10);
 });
+
+// 外部 v-model 变更（例如：切换文章点“修改”）时，同步刷新编辑器内容
+watch(
+  () => props.modelValue,
+  (next) => {
+    const nextHtml = next ?? "";
+    if (nextHtml === valueHtml.value) return;
+    syncingFromOutside.value = true;
+    valueHtml.value = nextHtml;
+    try {
+      editorRef.value?.setHtml?.(nextHtml);
+    } catch (_) {}
+    // 放到微任务末尾，避免触发 onChange 立刻回写
+    Promise.resolve().then(() => {
+      syncingFromOutside.value = false;
+    });
+  }
+);
 
 // 组件销毁时，也及时销毁编辑器，重要！
 onBeforeUnmount(() => {
@@ -99,8 +122,8 @@ const handleCreated = (editor) => {
 const handleChange = (editor) => {
   //   console.log("change:", editor.getHtml());
 
-  if (initFinished) {
-    emit("update:model-value", valueHtml.value);
+  if (initFinished && !syncingFromOutside.value) {
+    emit("update:modelValue", valueHtml.value);
   }
 };
 </script>
