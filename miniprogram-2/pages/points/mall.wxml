@@ -1,0 +1,98 @@
+<!--pages/points/mall.wxml-->
+<view class="page">
+  <!-- 顶部栏 -->
+  <view class="top-bar">
+    <view class="user-points">
+      <text class="label">我的积分</text>
+      <text class="value">{{userInfo.points || 0}}</text>
+    </view>
+    <view class="orders-btn" bindtap="goToOrders">
+      <text>我的订单</text>
+    </view>
+  </view>
+
+  <!-- 分类标签 -->
+  <view class="tabs">
+    <view 
+      class="tab-item {{activeTab === 'all' ? 'active' : ''}}" 
+      data-type="all" 
+      bindtap="switchTab"
+    >
+      全部
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'physical' ? 'active' : ''}}" 
+      data-type="physical" 
+      bindtap="switchTab"
+    >
+      实物商品
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'virtual' ? 'active' : ''}}" 
+      data-type="virtual" 
+      bindtap="switchTab"
+    >
+      虚拟商品
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'title' ? 'active' : ''}}" 
+      data-type="title" 
+      bindtap="switchTab"
+    >
+      称号
+    </view>
+  </view>
+
+  <!-- 商品列表 -->
+  <scroll-view class="goods-list" scroll-y enable-back-to-top>
+    <view class="goods-grid">
+      <view 
+        class="goods-item" 
+        wx:for="{{goodsList}}" 
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goToGoodsDetail"
+      >
+        <!-- 有图片 -->
+        <view class="goods-image" wx:if="{{item.image_url}}">
+          <image src="{{item.image_url}}" mode="aspectFill" />
+          <view class="goods-type-tag">{{formatGoodsType(item.type)}}</view>
+        </view>
+        <!-- 无图片，用标题作为背景 -->
+        <view class="goods-image-placeholder" wx:else>
+          <text class="placeholder-text">{{item.name}}</text>
+          <view class="goods-type-tag">{{formatGoodsType(item.type)}}</view>
+        </view>
+        
+        <view class="goods-info">
+          <text class="goods-name">{{item.name}}</text>
+          <view class="goods-footer">
+            <view class="goods-points">
+              <text class="points-value">{{item.points_cost}}</text>
+              <text class="points-unit">积分</text>
+            </view>
+            <text class="goods-stock {{item.stock === 0 ? 'sold-out' : ''}}">
+              {{formatStock(item.stock)}}
+            </text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-more" wx:if="{{loading && goodsList.length > 0}}">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" wx:if="{{!hasMore && goodsList.length > 0}}">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && goodsList.length === 0}}">
+      <text class="empty-icon">🛒</text>
+      <text class="empty-text">暂无商品</text>
+    </view>
+  </scroll-view>
+</view>

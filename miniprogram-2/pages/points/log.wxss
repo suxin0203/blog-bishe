@@ -1,0 +1,56 @@
+/* pages/points/log.wxss */
+.page {
+  height: 100vh;
+  background: #f6f7f9;
+}
+
+.content {
+  height: 100%;
+  padding: 32rpx;
+}
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.log-item {
+  padding: 24rpx;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.log-reason {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1f2937;
+  font-weight: 500;
+  margin-right: 16rpx;
+}
+
+.log-change {
+  font-size: 36rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.log-change.positive {
+  color: #18a058;
+}
+
+.log-change.negative {
+  color: #ef4444;
+}
+
+.log-time {
+  display: block;
+  font-size: 24rpx;
+  color: #9ca3af;
+}

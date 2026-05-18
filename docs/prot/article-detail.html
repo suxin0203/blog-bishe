@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>文章详情 - 文栈博客小程序原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{width:430px;height:932px;margin:0;overflow:hidden;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.safe-top{height:54px}.screen{width:430px;height:932px;position:relative;overflow:hidden;background:#fff}.content{height:calc(932px - 54px - 76px);overflow-y:auto;padding-bottom:24px}.prose p{margin:12px 0;line-height:1.85;color:#374151}.prose h2{font-size:20px;font-weight:800;margin-top:24px;color:#111827}.code{background:#111827;color:#d1fae5;border-radius:18px;padding:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.7}</style>
+</head>
+<body>
+  <div class="screen">
+    <div class="safe-top bg-white"></div>
+    <header class="px-5 py-3 bg-white border-b border-gray-100 flex items-center justify-between">
+      <span class="text-gray-500">返回</span>
+      <span class="font-semibold text-gray-900">文章详情</span>
+      <span class="text-emerald-600">分享</span>
+    </header>
+    <main class="content px-5 pt-5">
+      <div class="mb-5">
+        <div class="flex gap-2 mb-3"><span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs">小程序</span><span class="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs">Markdown</span></div>
+        <h1 class="text-3xl font-black text-gray-950 leading-tight">小程序端如何复用现有博客 API</h1>
+        <div class="mt-4 flex items-center gap-3 text-xs text-gray-400"><span>苏新</span><span>2026-05-13</span><span>阅读 756</span></div>
+      </div>
+      <div class="h-48 rounded-[28px] bg-gradient-to-br from-emerald-100 via-teal-100 to-blue-100 mb-6 flex items-center justify-center text-emerald-700 font-bold">文章封面图</div>
+      <article class="prose">
+        <p>文栈博客小程序端不需要重写后端，可以复用现有 Express RESTful API。核心工作在于请求封装、登录态管理和移动端页面体验。</p>
+        <h2>一、请求封装</h2>
+        <p>小程序请求层统一处理 baseURL、Authorization、X-Request-Time 和错误提示。当接口返回 401 时，可通过 refreshToken 进行刷新。</p>
+        <div class="code">wx.request({\n  url: baseURL + '/articles',\n  header: { Authorization: 'Bearer ' + token }\n})</div>
+        <h2>二、文章渲染</h2>
+        <p>当前文章内容以 HTML 为主，MVP 阶段可以先兼容 rich-text；后续建议迁移到 Markdown，提高小程序端渲染稳定性。</p>
+      </article>
+      <section class="mt-8">
+        <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold text-gray-900">评论区</h2><span class="text-xs text-gray-400">12 条评论</span></div>
+        <div class="space-y-3">
+          <div class="bg-gray-50 rounded-2xl p-4"><div class="flex justify-between"><span class="font-semibold text-sm">前端小白</span><span class="text-xs text-gray-400">刚刚</span></div><p class="text-sm text-gray-600 mt-2">接口复用这块讲得很清楚，登录态刷新也需要考虑。</p></div>
+          <div class="bg-gray-50 rounded-2xl p-4"><div class="flex justify-between"><span class="font-semibold text-sm">后端同学</span><span class="text-xs text-gray-400">1小时前</span></div><p class="text-sm text-gray-600 mt-2">建议扫码登录确认页也放进小程序 MVP。</p></div>
+        </div>
+      </section>
+    </main>
+    <footer class="absolute bottom-0 left-0 right-0 h-[76px] bg-white border-t border-gray-100 px-5 flex items-center gap-3">
+      <div class="flex-1 h-11 rounded-full bg-gray-100 px-4 flex items-center text-sm text-gray-400">写评论...</div>
+      <button class="w-12 h-11 rounded-full bg-red-50 text-red-500">赞</button>
+      <button class="w-12 h-11 rounded-full bg-yellow-50 text-yellow-600">藏</button>
+    </footer>
+  </div>
+</body>
+</html>

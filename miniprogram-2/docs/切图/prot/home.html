@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>首页 - 文栈博客小程序原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { width: 430px; height: 932px; margin: 0; overflow: hidden; background: #f6f7f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .safe-top { height: 54px; }
+    .screen { width: 430px; height: 932px; overflow: hidden; position: relative; background: #f6f7f9; }
+    .content { height: calc(932px - 54px - 84px); overflow-y: auto; padding-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="safe-top bg-white"></div>
+    <header class="bg-white px-5 pb-4 rounded-b-[28px] shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400">欢迎回来</p>
+          <h1 class="text-2xl font-bold text-gray-900">文栈博客</h1>
+        </div>
+        <div class="w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">WZ</div>
+      </div>
+      <div class="mt-4 h-12 rounded-2xl bg-gray-100 flex items-center px-4 text-gray-400 text-sm">
+        <span class="mr-2">搜索</span>
+        <span>搜索文章标题、分类或标签</span>
+      </div>
+    </header>
+
+    <main class="content px-5 pt-4">
+      <section class="h-40 rounded-[28px] bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-5 shadow-lg">
+        <p class="text-sm opacity-80">推荐专题</p>
+        <h2 class="mt-3 text-2xl font-bold leading-tight">Vue3 + Express<br/>全栈博客实践</h2>
+        <p class="mt-3 text-xs opacity-80">阅读 12.8k · 18 篇文章</p>
+      </section>
+
+      <section class="mt-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-bold text-gray-900">热门文章</h3>
+          <span class="text-xs text-emerald-600">查看更多</span>
+        </div>
+        <div class="space-y-3">
+          <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">1</div>
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-900 line-clamp-1">PC 扫微信小程序码登录设计</h4>
+              <p class="text-xs text-gray-400 mt-1">认证安全 · 2.3k 阅读</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">2</div>
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-900 line-clamp-1">积分系统如何支撑内容激励</h4>
+              <p class="text-xs text-gray-400 mt-1">积分商城 · 1.9k 阅读</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-bold text-gray-900">最新文章</h3>
+          <span class="text-xs text-gray-400">下拉刷新</span>
+        </div>
+        <div class="space-y-4">
+          <article class="bg-white rounded-[24px] p-4 shadow-sm">
+            <div class="flex gap-3">
+              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100"></div>
+              <div class="flex-1">
+                <h4 class="font-bold text-gray-900 leading-snug">Vue3 组合式 API 在后台管理中的实践</h4>
+                <p class="text-xs text-gray-500 mt-2 line-clamp-2">围绕文章管理、分类标签、用户权限等模块总结组件拆分方式。</p>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center gap-2 text-xs text-gray-400">
+              <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">前端</span>
+              <span>Vue3</span><span>·</span><span>2026-05-13</span><span>·</span><span>886 阅读</span>
+            </div>
+          </article>
+          <article class="bg-white rounded-[24px] p-4 shadow-sm">
+            <h4 class="font-bold text-gray-900">Express 中 JWT 与 RBAC 权限控制实现</h4>
+            <p class="text-sm text-gray-500 mt-2 line-clamp-2">从 /token 路由鉴权、角色判断、用户状态校验三个层面说明后端安全链路。</p>
+            <div class="mt-3 flex items-center gap-2 text-xs text-gray-400">
+              <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-600">后端</span>
+              <span>Express</span><span>·</span><span>1.2k 阅读</span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <nav class="absolute bottom-0 left-0 right-0 h-[84px] bg-white border-t border-gray-100 flex justify-around pt-3 text-xs">
+      <div class="text-emerald-600 font-semibold text-center"><div class="text-lg">首页</div><span>首页</span></div>
+      <div class="text-gray-400 text-center"><div class="text-lg">类目</div><span>分类</span></div>
+      <div class="text-gray-400 text-center"><div class="text-lg">积分</div><span>积分</span></div>
+      <div class="text-gray-400 text-center"><div class="text-lg">我的</div><span>我的</span></div>
+    </nav>
+  </div>
+</body>
+</html>

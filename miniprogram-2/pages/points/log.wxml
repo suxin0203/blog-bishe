@@ -1,0 +1,32 @@
+<!--pages/points/log.wxml-->
+<view class="page">
+  <scroll-view class="content" scroll-y>
+    <view class="log-list" wx:if="{{logs.length > 0}}">
+      <view class="log-item card" wx:for="{{logs}}" wx:key="id">
+        <view class="log-header">
+          <view class="log-info">
+            <text class="log-reason">{{item.reasonText}}</text>
+          </view>
+          <text class="log-change {{item.change > 0 ? 'positive' : 'negative'}}">
+            {{item.change > 0 ? '+' : ''}}{{item.change}}
+          </text>
+        </view>
+        <text class="log-time">{{formatTime(item.created_at)}}</text>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+    <view class="no-more" wx:if="{{!hasMore && logs.length > 0}}">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && logs.length === 0}}">
+      <text class="empty-icon">📋</text>
+      <text class="empty-text">暂无积分记录</text>
+    </view>
+  </scroll-view>
+</view>

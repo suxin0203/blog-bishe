@@ -1,0 +1,47 @@
+<!--pages/pc-qr-login/index.wxml-->
+<view class="page">
+  <!-- 成功页面 -->
+  <view class="success-page" wx:if="{{showSuccess}}">
+    <view class="success-icon">✓</view>
+    <text class="success-title">授权成功</text>
+    <text class="success-desc">PC 端已登录，页面即将关闭</text>
+    
+    <!-- 自动授权开关 -->
+    <view class="auto-auth-section">
+      <view class="auto-auth-item">
+        <view class="auto-auth-info">
+          <text class="auto-auth-title">下次自动授权</text>
+          <text class="auto-auth-desc">开启后扫码即可登录，无需确认</text>
+        </view>
+        <switch checked="{{autoAuth}}" bindchange="toggleAutoAuth" color="#059669" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 确认页面 -->
+  <view class="confirm-page" wx:if="{{!showSuccess && !loading}}">
+    <view class="container">
+      <!-- PC 图标 -->
+      <view class="pc-icon">PC</view>
+
+      <!-- 标题 -->
+      <text class="title">确认登录电脑端？</text>
+      <text class="desc">确认后，电脑端将获得与你当前账号一致的登录状态</text>
+
+      <!-- 操作按钮 -->
+      <button class="confirm-btn" bindtap="handleConfirm">确认登录</button>
+      <button class="cancel-btn" bindtap="handleCancel">取消</button>
+
+      <!-- 安全提示 -->
+      <view class="tips">
+        <text class="tip-text">如果不是你本人操作，请立即取消</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-page" wx:if="{{loading}}">
+    <view class="loading-icon"></view>
+    <text class="loading-text">授权中...</text>
+  </view>
+</view>

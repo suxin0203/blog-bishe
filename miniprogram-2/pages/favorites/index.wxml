@@ -1,0 +1,40 @@
+<!--pages/favorites/index.wxml-->
+<view class="page">
+  <scroll-view class="content" scroll-y>
+    <view class="article-list" wx:if="{{articles.length > 0}}">
+      <view class="article-item card" wx:for="{{articles}}" wx:key="id" bindtap="goToArticle" data-id="{{item.article_id}}">
+        <view class="article-with-cover" wx:if="{{item.cover_image}}">
+          <view class="article-info">
+            <text class="article-title">{{item.title}}</text>
+            <text class="article-summary">{{item.summary}}</text>
+          </view>
+          <image class="article-cover" src="{{item.cover_image}}" mode="aspectFill" />
+        </view>
+        
+        <view class="article-no-cover" wx:else>
+          <text class="article-title">{{item.title}}</text>
+          <text class="article-summary">{{item.summary}}</text>
+        </view>
+
+        <view class="article-meta">
+          <text class="meta-item">{{item.category_name}}</text>
+          <text class="meta-divider">·</text>
+          <text class="meta-item">收藏于 {{formatTime(item.created_at)}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+    <view class="no-more" wx:if="{{!hasMore && articles.length > 0}}">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && articles.length === 0}}">
+      <text>暂无收藏</text>
+    </view>
+  </scroll-view>
+</view>

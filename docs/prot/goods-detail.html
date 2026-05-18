@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>积分商品详情 - 文栈博客小程序原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{width:430px;height:932px;margin:0;overflow:hidden;background:#f6f7f9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.safe-top{height:54px}.screen{width:430px;height:932px;position:relative;overflow:hidden;background:#f6f7f9}.content{height:calc(932px - 54px - 78px);overflow-y:auto}</style>
+</head>
+<body>
+  <div class="screen">
+    <div class="safe-top bg-white"></div>
+    <header class="bg-white px-5 h-[58px] flex items-center justify-between border-b border-gray-100"><span class="text-gray-500">返回</span><h1 class="font-bold text-gray-900">商品详情</h1><span class="text-gray-400">分享</span></header>
+    <main class="content">
+      <div class="h-80 bg-gradient-to-br from-orange-100 to-amber-200 flex items-center justify-center text-orange-600 text-2xl font-black">文栈周边礼盒</div>
+      <section class="bg-white rounded-t-[32px] -mt-8 relative p-6">
+        <div class="flex justify-between items-start"><div><h2 class="text-2xl font-black text-gray-900">文栈博客周边礼盒</h2><p class="text-sm text-gray-400 mt-2">贴纸 + 书签 + 定制徽章</p></div><span class="px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-xs">库存 20</span></div>
+        <div class="mt-6 flex items-end gap-2"><span class="text-4xl font-black text-orange-600">280</span><span class="text-sm text-gray-400 mb-1">积分</span></div>
+        <div class="mt-6 grid grid-cols-3 gap-3"><div class="bg-gray-50 rounded-2xl p-3 text-center"><div class="font-bold">包邮</div><p class="text-xs text-gray-400 mt-1">虚拟演示</p></div><div class="bg-gray-50 rounded-2xl p-3 text-center"><div class="font-bold">7天</div><p class="text-xs text-gray-400 mt-1">处理周期</p></div><div class="bg-gray-50 rounded-2xl p-3 text-center"><div class="font-bold">1件</div><p class="text-xs text-gray-400 mt-1">限兑</p></div></div>
+        <section class="mt-7"><h3 class="font-bold text-gray-900 mb-3">商品说明</h3><p class="text-sm text-gray-500 leading-relaxed">兑换成功后，管理员会在后台处理订单状态。积分会在创建订单时扣除，若后续发生退款，可通过积分流水记录返还。</p></section>
+        <section class="mt-7"><h3 class="font-bold text-gray-900 mb-3">兑换规则</h3><ul class="text-sm text-gray-500 space-y-2"><li>· 积分不足时不可兑换。</li><li>· 创建订单后会写入积分流水。</li><li>· 后台管理员可更新订单处理状态。</li></ul></section>
+      </section>
+    </main>
+    <footer class="absolute bottom-0 left-0 right-0 h-[78px] bg-white border-t border-gray-100 px-5 flex items-center gap-3"><div class="flex-1"><p class="text-xs text-gray-400">我的积分</p><p class="font-black text-gray-900">1,280</p></div><button class="w-44 h-13 rounded-2xl bg-orange-500 text-white font-bold py-4">立即兑换</button></footer>
+  </div>
+</body>
+</html>

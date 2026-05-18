@@ -1,0 +1,100 @@
+<!--pages/points/orders.wxml-->
+<view class="page">
+  <!-- 状态标签 -->
+  <view class="tabs">
+    <view 
+      class="tab-item {{activeTab === 'all' ? 'active' : ''}}" 
+      data-status="all" 
+      bindtap="switchTab"
+    >
+      全部
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" 
+      data-status="pending" 
+      bindtap="switchTab"
+    >
+      待发货
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'shipped' ? 'active' : ''}}" 
+      data-status="shipped" 
+      bindtap="switchTab"
+    >
+      已发货
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'completed' ? 'active' : ''}}" 
+      data-status="completed" 
+      bindtap="switchTab"
+    >
+      已完成
+    </view>
+  </view>
+
+  <!-- 订单列表 -->
+  <scroll-view class="order-list" scroll-y enable-back-to-top>
+    <view 
+      class="order-item" 
+      wx:for="{{orders}}" 
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="goToOrderDetail"
+    >
+      <!-- 订单头部 -->
+      <view class="order-header">
+        <text class="order-no">订单号：{{item.order_no}}</text>
+        <text class="order-status {{getStatusClass(item.status)}}">
+          {{formatOrderStatus(item.status)}}
+        </text>
+      </view>
+
+      <!-- 商品信息 -->
+      <view class="order-goods">
+        <!-- 有图片 -->
+        <image class="goods-image" src="{{item.goods_image_url}}" mode="aspectFill" wx:if="{{item.goods_image_url}}" />
+        <!-- 无图片，用文字背景 -->
+        <view class="goods-image-placeholder" wx:else>
+          <text class="placeholder-text">{{item.goods_name}}</text>
+          <view class="type-badge">{{item.goods_type === 'physical' ? '实物' : item.goods_type === 'title' ? '称号' : '虚拟'}}</view>
+        </view>
+        
+        <view class="goods-info">
+          <text class="goods-name">{{item.goods_name}}</text>
+          <view class="goods-meta">
+            <text class="goods-type">{{item.goods_type === 'physical' ? '实物' : item.goods_type === 'virtual' ? '虚拟' : '称号'}}</text>
+            <text class="goods-quantity">x{{item.quantity}}</text>
+          </view>
+        </view>
+        <view class="goods-points">
+          <text class="points-value">{{item.total_points}}</text>
+          <text class="points-unit">积分</text>
+        </view>
+      </view>
+
+      <!-- 订单底部 -->
+      <view class="order-footer">
+        <text class="order-time">{{formatTime(item.created_at)}}</text>
+        <view class="order-actions">
+          <text class="action-link">查看详情 ></text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-more" wx:if="{{loading && orders.length > 0}}">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" wx:if="{{!hasMore && orders.length > 0}}">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && orders.length === 0}}">
+      <text class="empty-icon">📦</text>
+      <text class="empty-text">暂无订单</text>
+    </view>
+  </scroll-view>
+</view>

@@ -1,0 +1,150 @@
+/**app.wxss**/
+page {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  background-color: #f6f7f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  font-size: 28rpx;
+  color: #1f2937;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+/* 防止页面横向滚动 */
+view, text, image, scroll-view {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* 防止长文本溢出 */
+text {
+  word-break: break-all;
+  word-wrap: break-word;
+}
+
+/* 全局容器 */
+.container {
+  width: 100%;
+  padding: 32rpx;
+  box-sizing: border-box;
+}
+
+/* 卡片样式 */
+.card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 按钮样式 */
+.btn-primary {
+  background: #18a058;
+  color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx 48rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 16rpx;
+  padding: 24rpx 48rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+/* 标签样式 */
+.tag {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  margin-right: 12rpx;
+}
+
+.tag-primary {
+  background: #d1fae5;
+  color: #18a058;
+}
+
+.tag-secondary {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* 文本样式 */
+.text-primary {
+  color: #18a058;
+}
+
+.text-secondary {
+  color: #6b7280;
+}
+
+.text-muted {
+  color: #9ca3af;
+}
+
+.text-bold {
+  font-weight: 600;
+}
+
+/* 间距工具类 */
+.mt-8 { margin-top: 16rpx; }
+.mt-16 { margin-top: 32rpx; }
+.mt-24 { margin-top: 48rpx; }
+.mb-8 { margin-bottom: 16rpx; }
+.mb-16 { margin-bottom: 32rpx; }
+.mb-24 { margin-bottom: 48rpx; }
+
+/* 布局工具类 */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-center {
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 120rpx 32rpx;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.empty-state image {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 32rpx;
+}
+
+/* 加载状态 */
+.loading-state {
+  padding: 80rpx 32rpx;
+  text-align: center;
+  color: #9ca3af;
+}

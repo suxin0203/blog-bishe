@@ -1,0 +1,122 @@
+<!--pages/search/index.wxml-->
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="back-btn" bindtap="goBack">
+        <text class="icon">←</text>
+      </view>
+      <view class="search-box">
+        <text class="search-icon">🔍</text>
+        <input 
+          class="search-input" 
+          placeholder="搜索文章" 
+          value="{{keyword}}"
+          bindinput="onKeywordInput"
+          bindconfirm="handleSearch"
+          focus="{{true}}"
+        />
+        <view class="clear-btn" wx:if="{{keyword}}" bindtap="clearInput">
+          <text class="icon">✕</text>
+        </view>
+      </view>
+      <view class="search-btn" bindtap="handleSearch">
+        <text>搜索</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
+  <scroll-view class="content" scroll-y enable-back-to-top style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+    <!-- 搜索建议 -->
+    <view class="search-suggestions" wx:if="{{!searched}}">
+      <!-- 搜索历史 -->
+      <view class="section" wx:if="{{searchHistory.length > 0}}">
+        <view class="section-header">
+          <text class="section-title">搜索历史</text>
+          <text class="clear-btn" bindtap="clearSearchHistory">清空</text>
+        </view>
+        <view class="tag-list">
+          <view 
+            class="tag-item" 
+            wx:for="{{searchHistory}}" 
+            wx:key="index"
+            data-keyword="{{item}}"
+            bindtap="selectKeyword"
+          >
+            {{item}}
+          </view>
+        </view>
+      </view>
+
+      <!-- 热门搜索 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">热门搜索</text>
+        </view>
+        <view class="tag-list">
+          <view 
+            class="tag-item hot" 
+            wx:for="{{hotKeywords}}" 
+            wx:key="index"
+            data-keyword="{{item}}"
+            bindtap="selectKeyword"
+          >
+            {{item}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 搜索结果 -->
+    <view class="search-results" wx:if="{{searched}}">
+      <!-- 结果统计 -->
+      <view class="result-count">
+        <text>找到 {{searchResults.length}} 篇相关文章</text>
+      </view>
+
+      <!-- 文章列表 -->
+      <view class="article-list" wx:if="{{searchResults.length > 0}}">
+        <view 
+          class="article-item" 
+          wx:for="{{searchResults}}" 
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="goToArticle"
+        >
+          <view class="article-content">
+            <text class="article-title">{{item.title}}</text>
+            <text class="article-summary" wx:if="{{item.summary}}">{{item.summary}}</text>
+            <view class="article-meta">
+              <text class="meta-item">{{formatTime(item.created_at)}}</text>
+              <text class="meta-item">{{formatReadCount(item.views)}} 阅读</text>
+            </view>
+          </view>
+          <image 
+            class="article-cover" 
+            src="{{item.cover_image}}" 
+            mode="aspectFill"
+            wx:if="{{item.cover_image}}"
+          />
+        </view>
+      </view>
+
+      <!-- 加载状态 -->
+      <view class="loading-more" wx:if="{{searching}}">
+        <text>加载中...</text>
+      </view>
+
+      <!-- 没有更多 -->
+      <view class="no-more" wx:if="{{!hasMore && searchResults.length > 0}}">
+        <text>没有更多了</text>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{!searching && searchResults.length === 0}}">
+        <text class="empty-icon">🔍</text>
+        <text class="empty-text">没有找到相关文章</text>
+        <text class="empty-tip">换个关键词试试吧</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

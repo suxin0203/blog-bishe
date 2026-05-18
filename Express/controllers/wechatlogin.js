@@ -36,7 +36,7 @@ exports.wxloginUserByOpenid = async (req, res, next) => {
     try {
         const openid = req.params.openid;
         console.log(openid);
-        const sql = `SELECT * FROM users WHERE openid = ?`;
+        const sql = `SELECT * FROM wz_users WHERE openid = ?`;
         const values = [openid];
         const users = await runQuery(sql, values);
 

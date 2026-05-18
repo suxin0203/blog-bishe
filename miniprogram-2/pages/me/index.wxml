@@ -1,0 +1,60 @@
+<!--pages/me/index.wxml-->
+<view class="page">
+  <scroll-view class="content" scroll-y>
+    <!-- 未登录状态 -->
+    <view class="login-prompt" wx:if="{{!isLoggedIn}}">
+      <view class="avatar-placeholder">👤</view>
+      <text class="login-text">登录后查看更多功能</text>
+      <button class="login-btn" bindtap="goToLogin">立即登录</button>
+    </view>
+
+    <!-- 已登录状态 -->
+    <view class="user-card" wx:if="{{isLoggedIn && userInfo}}">
+      <view class="user-header">
+        <view class="avatar">
+          <text class="avatar-text">{{userInfo.username ? userInfo.username.substring(0, 1).toUpperCase() : 'U'}}</text>
+        </view>
+        <view class="user-info">
+          <text class="username">{{userInfo.username || '用户'}}</text>
+          <text class="user-role">{{userInfo.role === 'admin' ? '管理员' : userInfo.role === 'editor' ? '编辑' : '普通用户'}}</text>
+        </view>
+      </view>
+
+      <view class="user-stats">
+        <view class="stat-item">
+          <text class="stat-value">{{userInfo.points || 0}}</text>
+          <text class="stat-label">积分</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{userInfo.article_count || 0}}</text>
+          <text class="stat-label">文章</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{userInfo.comment_count || 0}}</text>
+          <text class="stat-label">评论</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 菜单列表 -->
+    <view class="menu-list" wx:if="{{isLoggedIn}}">
+      <view class="menu-item card" wx:for="{{menuList}}" wx:key="title" bindtap="goToMenu" data-url="{{item.url}}">
+        <view class="menu-icon">{{item.icon}}</view>
+        <text class="menu-title">{{item.title}}</text>
+        <text class="menu-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- 退出登录 -->
+    <view class="logout-section" wx:if="{{isLoggedIn}}">
+      <button class="logout-btn" bindtap="handleLogout">退出登录</button>
+    </view>
+
+    <!-- 版本信息 -->
+    <view class="version-info">
+      <text class="version-text">文栈博客小程序 v1.0.0</text>
+    </view>
+  </scroll-view>
+</view>

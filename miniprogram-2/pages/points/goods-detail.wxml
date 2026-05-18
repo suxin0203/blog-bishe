@@ -1,0 +1,136 @@
+<!--pages/points/goods-detail.wxml-->
+<view class="page">
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 商品详情 -->
+  <scroll-view class="content" scroll-y wx:if="{{!loading && goods}}">
+    <!-- 商品图片 -->
+    <view class="goods-image" bindtap="previewImage">
+      <image src="{{goods.image_url}}" mode="aspectFill" />
+    </view>
+
+    <!-- 商品信息 -->
+    <view class="goods-info card">
+      <view class="goods-header">
+        <text class="goods-name">{{goods.name}}</text>
+        <view class="goods-type">{{formatGoodsType(goods.type)}}</view>
+      </view>
+      
+      <view class="goods-points">
+        <text class="points-label">所需积分</text>
+        <text class="points-value">{{goods.points_cost}}</text>
+      </view>
+
+      <view class="goods-stock">
+        <text class="stock-label">库存：</text>
+        <text class="stock-value">{{formatStock(goods.stock)}}</text>
+      </view>
+
+      <view class="goods-desc">
+        <text class="desc-label">商品描述</text>
+        <text class="desc-content">{{goods.description || '暂无描述'}}</text>
+      </view>
+    </view>
+
+    <!-- 用户积分 -->
+    <view class="user-points card">
+      <text class="label">我的积分</text>
+      <text class="value">{{userInfo.points || 0}}</text>
+    </view>
+
+    <!-- 兑换数量 -->
+    <view class="quantity-selector card">
+      <text class="label">兑换数量</text>
+      <view class="selector">
+        <view class="btn decrease {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">-</view>
+        <input class="input" type="number" value="{{quantity}}" bindinput="onQuantityInput" />
+        <view class="btn increase" bindtap="increaseQuantity">+</view>
+      </view>
+    </view>
+
+    <!-- 总计 -->
+    <view class="total-points card">
+      <text class="label">总计积分</text>
+      <text class="value">{{goods.points_cost * quantity}}</text>
+    </view>
+
+    <!-- 备注 -->
+    <view class="remark card">
+      <text class="label">备注（选填）</text>
+      <textarea 
+        class="textarea" 
+        placeholder="请输入备注信息" 
+        value="{{userRemark}}"
+        bindinput="onUserRemarkInput"
+        maxlength="200"
+      />
+    </view>
+
+    <!-- 占位 -->
+    <view class="bottom-placeholder"></view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar" wx:if="{{!loading && goods}}">
+    <view class="total-info">
+      <text class="label">需要</text>
+      <text class="value">{{goods.points_cost * quantity}}</text>
+      <text class="unit">积分</text>
+    </view>
+    <button class="redeem-btn" bindtap="handleRedeem">立即兑换</button>
+  </view>
+
+  <!-- 收货地址弹窗 -->
+  <view class="address-modal" wx:if="{{showAddressForm}}">
+    <view class="modal-mask" bindtap="cancelAddress"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">填写收货信息</text>
+        <view class="modal-close" bindtap="cancelAddress">✕</view>
+      </view>
+
+      <view class="modal-body">
+        <view class="form-item">
+          <text class="form-label">收货人 *</text>
+          <input 
+            class="form-input" 
+            placeholder="请输入收货人姓名" 
+            value="{{receiverName}}"
+            bindinput="onReceiverNameInput"
+          />
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">手机号 *</text>
+          <input 
+            class="form-input" 
+            type="number"
+            placeholder="请输入手机号" 
+            value="{{receiverPhone}}"
+            bindinput="onReceiverPhoneInput"
+            maxlength="11"
+          />
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">收货地址 *</text>
+          <textarea 
+            class="form-textarea" 
+            placeholder="请输入详细收货地址" 
+            value="{{receiverAddress}}"
+            bindinput="onReceiverAddressInput"
+            maxlength="200"
+          />
+        </view>
+      </view>
+
+      <view class="modal-footer">
+        <button class="btn-cancel" bindtap="cancelAddress">取消</button>
+        <button class="btn-confirm" bindtap="confirmRedeem">确认兑换</button>
+      </view>
+    </view>
+  </view>
+</view>

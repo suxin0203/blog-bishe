@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>扫码确认 - 文栈博客小程序原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{width:430px;height:932px;margin:0;overflow:hidden;background:#f6f7f9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.safe-top{height:54px}.screen{width:430px;height:932px;overflow:hidden;background:#f6f7f9}</style>
+</head>
+<body>
+  <div class="screen">
+    <div class="safe-top bg-white"></div>
+    <header class="bg-white px-5 h-[58px] flex items-center justify-center border-b border-gray-100"><h1 class="font-bold text-gray-900">PC 扫码登录确认</h1></header>
+    <main class="px-6 pt-14">
+      <div class="bg-white rounded-[32px] p-7 shadow-sm text-center">
+        <div class="mx-auto w-24 h-24 rounded-[32px] bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl font-black">PC</div>
+        <h2 class="mt-6 text-2xl font-black text-gray-900">是否确认登录电脑端？</h2>
+        <p class="mt-3 text-sm text-gray-500 leading-relaxed">确认后，电脑端文栈博客将获得与你当前账号一致的登录状态。</p>
+        <div class="mt-7 bg-gray-50 rounded-2xl p-4 text-left space-y-3 text-sm">
+          <div class="flex justify-between"><span class="text-gray-400">设备</span><span class="font-semibold text-gray-700">Chrome / Windows</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">IP</span><span class="font-semibold text-gray-700">192.168.*.*</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">状态</span><span class="font-semibold text-emerald-600">pending</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">有效期</span><span class="font-semibold text-gray-700">5 分钟</span></div>
+        </div>
+        <button class="mt-8 w-full h-14 rounded-2xl bg-emerald-600 text-white font-bold text-lg">确认登录</button>
+        <button class="mt-3 w-full h-14 rounded-2xl bg-gray-100 text-gray-600 font-bold">取消</button>
+      </div>
+      <p class="mt-5 text-xs text-gray-400 text-center leading-relaxed">如果不是你本人操作，请立即取消。二维码不会携带 Token，登录态由后端确认后签发。</p>
+    </main>
+  </div>
+</body>
+</html>

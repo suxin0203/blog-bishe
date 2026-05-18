@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>分类 - 文栈博客小程序原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{width:430px;height:932px;margin:0;overflow:hidden;background:#f6f7f9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.safe-top{height:54px}.screen{width:430px;height:932px;position:relative;overflow:hidden;background:#f6f7f9}.content{height:calc(932px - 54px - 84px);overflow-y:auto;padding-bottom:20px}</style>
+</head>
+<body>
+  <div class="screen">
+    <div class="safe-top bg-white"></div>
+    <header class="bg-white px-5 pb-5 rounded-b-[28px] shadow-sm"><h1 class="text-2xl font-bold text-gray-900">分类与标签</h1><p class="text-sm text-gray-400 mt-1">按主题快速查找文章</p></header>
+    <main class="content px-5 pt-5">
+      <section>
+        <h2 class="font-bold text-gray-900 mb-3">文章分类</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-[24px] bg-white p-5 shadow-sm"><div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">前</div><h3 class="font-bold mt-4">前端开发</h3><p class="text-xs text-gray-400 mt-1">36 篇文章</p></div>
+          <div class="rounded-[24px] bg-white p-5 shadow-sm"><div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">后</div><h3 class="font-bold mt-4">后端开发</h3><p class="text-xs text-gray-400 mt-1">42 篇文章</p></div>
+          <div class="rounded-[24px] bg-white p-5 shadow-sm"><div class="w-11 h-11 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">数</div><h3 class="font-bold mt-4">数据库</h3><p class="text-xs text-gray-400 mt-1">18 篇文章</p></div>
+          <div class="rounded-[24px] bg-white p-5 shadow-sm"><div class="w-11 h-11 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">微</div><h3 class="font-bold mt-4">小程序</h3><p class="text-xs text-gray-400 mt-1">12 篇文章</p></div>
+        </div>
+      </section>
+      <section class="mt-7">
+        <h2 class="font-bold text-gray-900 mb-3">热门标签</h2>
+        <div class="flex flex-wrap gap-3">
+          <span class="px-4 py-2 rounded-full bg-emerald-600 text-white text-sm">Vue3</span><span class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm shadow-sm">Express</span><span class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm shadow-sm">MySQL</span><span class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm shadow-sm">JWT</span><span class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm shadow-sm">积分系统</span><span class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm shadow-sm">扫码登录</span><span class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm shadow-sm">Markdown</span>
+        </div>
+      </section>
+      <section class="mt-7">
+        <h2 class="font-bold text-gray-900 mb-3">Vue3 相关文章</h2>
+        <div class="bg-white rounded-[24px] p-5 shadow-sm"><h3 class="font-bold text-gray-900">Vue3 + Naive UI 后台布局实践</h3><p class="text-sm text-gray-500 mt-2">从导航、路由、权限和表格组件拆分后台管理页面。</p><div class="mt-4 text-xs text-gray-400">阅读 1.1k · 收藏 28</div></div>
+      </section>
+    </main>
+    <nav class="absolute bottom-0 left-0 right-0 h-[84px] bg-white border-t border-gray-100 flex justify-around pt-3 text-xs"><div class="text-gray-400 text-center"><div class="text-lg">首页</div><span>首页</span></div><div class="text-emerald-600 font-semibold text-center"><div class="text-lg">类目</div><span>分类</span></div><div class="text-gray-400 text-center"><div class="text-lg">积分</div><span>积分</span></div><div class="text-gray-400 text-center"><div class="text-lg">我的</div><span>我的</span></div></nav>
+  </div>
+</body>
+</html>

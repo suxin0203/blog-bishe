@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>文栈博客小程序前端原型总览</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .prototype-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(454px, 454px));
+      gap: 40px;
+      justify-content: center;
+      align-items: start;
+    }
+
+    .prototype-card {
+      width: 454px;
+    }
+
+    .phone-frame {
+      box-sizing: border-box;
+      width: 454px;
+      height: 956px;
+      border: 12px solid #111827;
+      border-radius: 46px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    iframe {
+      flex: 0 0 430px;
+      width: 430px;
+      height: 932px;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header class="sticky top-0 z-10 bg-slate-950/90 backdrop-blur border-b border-white/10 px-8 py-6">
+    <div class="max-w-[1800px] mx-auto flex items-end justify-between gap-6">
+      <div>
+        <p class="text-emerald-400 text-sm font-semibold tracking-widest uppercase">Wenzhan Blog Mini Program Prototype</p>
+        <h1 class="mt-2 text-3xl font-black text-white">文栈博客微信小程序前端原型图</h1>
+        <p class="mt-2 text-slate-400">HTML + Tailwind CSS 实现；每个页面独立 HTML 文件；当前页面通过 iframe 按 iPhone 16 Pro Max 近似内容尺寸 430 × 932 展示，外层手机框实际宽度 454px。</p>
+      </div>
+      <div class="text-right text-slate-400 text-sm shrink-0">
+        <p>目录：<span class="text-slate-200">docs/prot</span></p>
+        <p>入口：<span class="text-slate-200">index.html</span></p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1800px] mx-auto p-8">
+    <section class="prototype-grid">
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">首页 home.html</h2>
+        <div class="phone-frame"><iframe src="home.html" title="首页"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">文章列表 article-list.html</h2>
+        <div class="phone-frame"><iframe src="article-list.html" title="文章列表"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">文章详情 article-detail.html</h2>
+        <div class="phone-frame"><iframe src="article-detail.html" title="文章详情"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">分类 category.html</h2>
+        <div class="phone-frame"><iframe src="category.html" title="分类"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">积分 points.html</h2>
+        <div class="phone-frame"><iframe src="points.html" title="积分"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">积分流水 points-log.html</h2>
+        <div class="phone-frame"><iframe src="points-log.html" title="积分流水"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">登录绑定 login.html</h2>
+        <div class="phone-frame"><iframe src="login.html" title="登录绑定"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">我的 mine.html</h2>
+        <div class="phone-frame"><iframe src="mine.html" title="我的"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">扫码确认 qr-login.html</h2>
+        <div class="phone-frame"><iframe src="qr-login.html" title="扫码确认"></iframe></div>
+      </div>
+      <div class="prototype-card">
+        <h2 class="mb-4 text-white font-bold text-xl text-center">商品详情 goods-detail.html</h2>
+        <div class="phone-frame"><iframe src="goods-detail.html" title="商品详情"></iframe></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

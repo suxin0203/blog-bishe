@@ -1,0 +1,64 @@
+<!--pages/about/index.wxml-->
+<view class="page">
+  <scroll-view class="content" scroll-y>
+    <!-- 应用信息 -->
+    <view class="app-info">
+      <text class="app-logo">{{appInfo.logo}}</text>
+      <text class="app-name">{{appInfo.name}}</text>
+      <text class="app-version">{{appInfo.version}}</text>
+      <text class="app-desc">{{appInfo.description}}</text>
+    </view>
+
+    <!-- 功能特性 -->
+    <view class="section">
+      <view class="section-title">功能特性</view>
+      <view class="features-grid">
+        <view class="feature-item" wx:for="{{features}}" wx:key="title">
+          <text class="feature-icon">{{item.icon}}</text>
+          <text class="feature-title">{{item.title}}</text>
+          <text class="feature-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 联系方式 -->
+    <view class="section">
+      <view class="section-title">联系我们</view>
+      <view class="contact-list">
+        <view class="contact-item" bindtap="openWebsite" data-url="{{contact.website}}">
+          <text class="contact-label">官方网站</text>
+          <text class="contact-value">{{contact.website}}</text>
+        </view>
+        <view class="contact-item" bindtap="copyText" data-text="{{contact.email}}">
+          <text class="contact-label">联系邮箱</text>
+          <text class="contact-value">{{contact.email}}</text>
+        </view>
+        <view class="contact-item" bindtap="openWebsite" data-url="{{contact.github}}">
+          <text class="contact-label">GitHub</text>
+          <text class="contact-value">{{contact.github}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 更新日志 -->
+    <view class="section">
+      <view class="section-title">更新日志</view>
+      <view class="update-list">
+        <view class="update-item" wx:for="{{updateLog}}" wx:key="version">
+          <view class="update-header">
+            <text class="update-version">{{item.version}}</text>
+            <text class="update-date">{{item.date}}</text>
+          </view>
+          <view class="update-items">
+            <text class="update-text" wx:for="{{item.items}}" wx:key="index" wx:for-item="log">• {{log}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 版权信息 -->
+    <view class="copyright">
+      <text>© 2026 文栈博客 All Rights Reserved</text>
+    </view>
+  </scroll-view>
+</view>

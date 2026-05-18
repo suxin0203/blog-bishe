@@ -1,0 +1,165 @@
+/* pages/points/rules.wxss */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.content {
+  height: 100vh;
+  padding: 40rpx 30rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 60rpx;
+  padding: 40rpx 0;
+}
+
+.page-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20rpx;
+}
+
+.page-desc {
+  display: block;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 规则列表 */
+.rules-list {
+  margin-bottom: 40rpx;
+}
+
+.rule-section {
+  background-color: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.section-icon {
+  font-size: 48rpx;
+  margin-right: 20rpx;
+}
+
+.section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.rule-items {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.rule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  background-color: #f8f9fa;
+  border-radius: 16rpx;
+}
+
+.rule-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.rule-action {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+
+.rule-limit {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.rule-points {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-left: 20rpx;
+}
+
+/* 温馨提示 */
+.tips-section {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  margin-bottom: 40rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.tips-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.tips-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+
+.tips-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+
+.tip-dot {
+  font-size: 32rpx;
+  color: #667eea;
+  margin-right: 16rpx;
+  line-height: 1.4;
+}
+
+.tip-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 底部说明 */
+.footer-note {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.footer-note text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7);
+}

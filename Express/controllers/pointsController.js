@@ -7,6 +7,7 @@ exports.getGoodsList = async (req, res) => {
     const opts = {
       all: req.query.all === '1',
       keyword: req.query.keyword,
+      type: req.query.type,
       page: req.query.page,
       pageSize: req.query.pageSize,
     };

@@ -6,6 +6,13 @@ async function getGoodsList(opts = {}) {
   const onlyOnSale = opts.all !== true;
   let where = onlyOnSale ? 'status = 1' : '1=1';
   const values = [];
+  
+  // 根据 type 筛选
+  if (opts.type && String(opts.type).trim()) {
+    where += ' AND type = ?';
+    values.push(String(opts.type).trim());
+  }
+  
   if (opts.keyword && String(opts.keyword).trim()) {
     const k = `%${String(opts.keyword).trim()}%`;
     where += ' AND (name LIKE ? OR description LIKE ?)';

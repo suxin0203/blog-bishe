@@ -1,0 +1,46 @@
+<!--pages/qr-login/index.wxml-->
+<view class="page">
+  <view class="header">
+    <text class="header-title">PC 扫码登录确认</text>
+  </view>
+
+  <view class="container">
+    <!-- PC 图标 -->
+    <view class="pc-icon">PC</view>
+
+    <!-- 标题 -->
+    <text class="title">是否确认登录电脑端？</text>
+    <text class="desc">确认后，电脑端文栈博客将获得与你当前账号一致的登录状态。</text>
+
+    <!-- 设备信息 -->
+    <view class="device-info">
+      <view class="info-item">
+        <text class="info-label">设备</text>
+        <text class="info-value">Chrome / Windows</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">IP</text>
+        <text class="info-value">192.168.*.*</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">状态</text>
+        <text class="info-value status-pending">pending</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">有效期</text>
+        <text class="info-value">5 分钟</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <button class="confirm-btn" bindtap="handleConfirm" loading="{{loading}}" disabled="{{loading}}">
+      确认登录
+    </button>
+    <button class="cancel-btn" bindtap="handleCancel">取消</button>
+
+    <!-- 安全提示 -->
+    <view class="tips">
+      <text class="tip-text">如果不是你本人操作，请立即取消。二维码不会携带 Token，登录态由后端确认后签发。</text>
+    </view>
+  </view>
+</view>

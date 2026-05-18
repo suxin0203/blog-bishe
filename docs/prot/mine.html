@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的 - 文栈博客小程序原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{width:430px;height:932px;margin:0;overflow:hidden;background:#f6f7f9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.safe-top{height:54px}.screen{width:430px;height:932px;position:relative;overflow:hidden;background:#f6f7f9}.content{height:calc(932px - 54px - 84px);overflow-y:auto;padding-bottom:20px}</style>
+</head>
+<body>
+  <div class="screen">
+    <div class="safe-top bg-gradient-to-br from-slate-900 to-emerald-800"></div>
+    <header class="bg-gradient-to-br from-slate-900 to-emerald-800 px-5 pb-8 text-white rounded-b-[32px]">
+      <div class="flex items-center gap-4"><div class="w-20 h-20 rounded-[28px] bg-white/20 flex items-center justify-center text-2xl font-bold">苏</div><div><h1 class="text-2xl font-bold">Suxin</h1><p class="text-sm opacity-75 mt-1">普通用户 · 积分 1280</p><p class="text-xs opacity-60 mt-1">openid 已绑定</p></div></div>
+    </header>
+    <main class="content px-5 -mt-5">
+      <section class="grid grid-cols-3 gap-3 mb-6"><div class="bg-white rounded-2xl p-4 text-center shadow-sm"><div class="font-black text-xl">18</div><p class="text-xs text-gray-400">收藏</p></div><div class="bg-white rounded-2xl p-4 text-center shadow-sm"><div class="font-black text-xl">42</div><p class="text-xs text-gray-400">评论</p></div><div class="bg-white rounded-2xl p-4 text-center shadow-sm"><div class="font-black text-xl">6</div><p class="text-xs text-gray-400">订单</p></div></section>
+      <section class="bg-white rounded-[26px] shadow-sm overflow-hidden">
+        <div class="p-5 flex justify-between border-b border-gray-100"><span class="font-semibold">我的收藏</span><span class="text-gray-400">›</span></div>
+        <div class="p-5 flex justify-between border-b border-gray-100"><span class="font-semibold">我的订单</span><span class="text-gray-400">›</span></div>
+        <div class="p-5 flex justify-between border-b border-gray-100"><span class="font-semibold">积分流水</span><span class="text-gray-400">›</span></div>
+        <div class="p-5 flex justify-between border-b border-gray-100"><span class="font-semibold">账号绑定</span><span class="text-gray-400">›</span></div>
+        <div class="p-5 flex justify-between"><span class="font-semibold">关于文栈博客</span><span class="text-gray-400">›</span></div>
+      </section>
+      <button class="mt-6 w-full h-12 rounded-2xl bg-red-50 text-red-500 font-semibold">退出登录</button>
+    </main>
+    <nav class="absolute bottom-0 left-0 right-0 h-[84px] bg-white border-t border-gray-100 flex justify-around pt-3 text-xs"><div class="text-gray-400 text-center"><div class="text-lg">首页</div><span>首页</span></div><div class="text-gray-400 text-center"><div class="text-lg">类目</div><span>分类</span></div><div class="text-gray-400 text-center"><div class="text-lg">积分</div><span>积分</span></div><div class="text-emerald-600 font-semibold text-center"><div class="text-lg">我的</div><span>我的</span></div></nav>
+  </div>
+</body>
+</html>

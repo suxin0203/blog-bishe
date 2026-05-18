@@ -10,7 +10,7 @@ const saltRounds = 10;
 // 获取所有用户
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const sql = 'SELECT * FROM users';
+    const sql = 'SELECT * FROM wz_users';
     const users = await runQuery(sql);
     // 不返回密码 并且格式化创建时间
     users.forEach(user => {
@@ -33,7 +33,7 @@ exports.getAllUsers = async (req, res, next) => {
 exports.getUserById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const sql = `SELECT * FROM users WHERE id = ?`;
+    const sql = `SELECT * FROM wz_users WHERE id = ?`;
     const values = [id];
     const users = await runQuery(sql, values);
     // 密码置空
@@ -56,7 +56,7 @@ exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { nickname, avatar_url } = req.body;
-    const sql = `UPDATE users SET nickname = ?, avatar_url = ? WHERE id = ?`;
+    const sql = `UPDATE wz_users SET nickname = ?, avatar_url = ? WHERE id = ?`;
     const values = [nickname, avatar_url, id];
     const row = await runQuery(sql, values);
     // 获取更新后的用户信息
@@ -83,7 +83,7 @@ exports.deleteUser = async (req, res, next) => {
       res.json({ code: 400, message: '无法删除自己' });
       return;
     }
-    const sql = `DELETE FROM users WHERE id = ?`;
+    const sql = `DELETE FROM wz_users WHERE id = ?`;
     const values = [id];
     const row = await runQuery(sql, values);
     if (row.affectedRows === 0) {
@@ -109,7 +109,7 @@ exports.loginUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
-    const sql = `SELECT * FROM users WHERE username = ?`;
+    const sql = `SELECT * FROM wz_users WHERE username = ?`;
     const values = [username];
     const row = await runQuery(sql, values);
     if (row.length === 0) {
@@ -128,12 +128,12 @@ exports.loginUser = async (req, res, next) => {
     if (req.body.openid) {
       // console.log('微信登录', req.body.openid);
       const openid = req.body.openid;
-      const updateSql = `UPDATE users SET openid = ? WHERE id = ?`;
+      const updateSql = `UPDATE wz_users SET openid = ? WHERE id = ?`;
       const values = [openid, user.id];
       const row = await runQuery(updateSql, values);
 
       // 重新查询用户信息，包括更新后的数据
-      const selectSql = `SELECT * FROM users WHERE id = ?`;
+      const selectSql = `SELECT * FROM wz_users WHERE id = ?`;
       const selectValues = [user.id];
       const selectRow = await runQuery(selectSql, selectValues);
       user = selectRow[0];
@@ -165,7 +165,7 @@ exports.registerUser = async (req, res, next) => {
       res.json({ code: 400, message: '用户名或密码不能为空' });
       return;
     }
-    const sql = `SELECT * FROM users WHERE username = ?`;
+    const sql = `SELECT * FROM wz_users WHERE username = ?`;
     const values = [username];
     const row = await runQuery(sql, values);
     if (row.length > 0) {
@@ -173,7 +173,7 @@ exports.registerUser = async (req, res, next) => {
     } else {
       // 使用 bcrypt 对密码进行哈希处理
       const hashedPassword = await bcrypt.hash(password, saltRounds);
-      const sql = `INSERT INTO users (username, password) VALUES (?, ?)`;
+      const sql = `INSERT INTO wz_users (username, password) VALUES (?, ?)`;
       const values = [username, hashedPassword];
       await runQuery(sql, values);
 
@@ -200,7 +200,7 @@ exports.updatePassword = async (req, res, next) => {
       return;
     }
     // 查询数据库获取用户信息，包括哈希过的密码
-    const sqlSelect = `SELECT * FROM users WHERE id = ?`;
+    const sqlSelect = `SELECT * FROM wz_users WHERE id = ?`;
     const valuesSelect = [id];
     const user = await runQuery(sqlSelect, valuesSelect);
     console.log(valuesSelect, '----', user)
@@ -223,7 +223,7 @@ exports.updatePassword = async (req, res, next) => {
     const newHashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // 更新密码
-    const sqlUpdate = `UPDATE users SET password = ? WHERE id = ?`;
+    const sqlUpdate = `UPDATE wz_users SET password = ? WHERE id = ?`;
     const valuesUpdate = [newHashedPassword, id];
     await runQuery(sqlUpdate, valuesUpdate);
 

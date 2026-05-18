@@ -1,0 +1,145 @@
+/* pages/qr-login/index.wxss */
+.page {
+  min-height: 100vh;
+  background: #f6f7f9;
+}
+
+.header {
+  background: #ffffff;
+  height: 116rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.header-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.container {
+  padding: 112rpx 48rpx 0;
+}
+
+/* PC 图标 */
+.pc-icon {
+  width: 192rpx;
+  height: 192rpx;
+  margin: 0 auto 48rpx;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60rpx;
+  font-weight: 900;
+  color: #059669;
+}
+
+/* 标题和描述 */
+.title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 900;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 24rpx;
+  line-height: 1.3;
+}
+
+.desc {
+  display: block;
+  font-size: 28rpx;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 56rpx;
+}
+
+/* 设备信息 */
+.device-info {
+  background: #f9fafb;
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 64rpx;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.info-item:not(:last-child) {
+  margin-bottom: 12rpx;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
+.info-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #374151;
+}
+
+.status-pending {
+  color: #059669 !important;
+}
+
+/* 按钮 */
+.confirm-btn {
+  width: 100%;
+  height: 112rpx;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  font-size: 36rpx;
+  font-weight: 700;
+  border-radius: 32rpx;
+  border: none;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(5, 150, 105, 0.3);
+}
+
+.confirm-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.confirm-btn[disabled] {
+  opacity: 0.6;
+}
+
+.cancel-btn {
+  width: 100%;
+  height: 112rpx;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 36rpx;
+  font-weight: 700;
+  border-radius: 32rpx;
+  border: none;
+  margin-bottom: 40rpx;
+}
+
+.cancel-btn:active {
+  background: #e5e7eb;
+}
+
+/* 提示 */
+.tips {
+  padding: 0 16rpx;
+}
+
+.tip-text {
+  display: block;
+  font-size: 24rpx;
+  color: #9ca3af;
+  text-align: center;
+  line-height: 1.6;
+}
