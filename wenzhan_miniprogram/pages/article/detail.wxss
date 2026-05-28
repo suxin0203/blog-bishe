@@ -1,0 +1,269 @@
+/* pages/article/detail.wxss */
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 文章头部 */
+.article-header {
+  padding: 32rpx;
+}
+
+.article-tags {
+  margin-bottom: 24rpx;
+}
+
+.article-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.4;
+  margin-bottom: 24rpx;
+}
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.meta-item {
+  margin-right: 8rpx;
+}
+
+.meta-divider {
+  margin-right: 8rpx;
+}
+
+/* 封面图 */
+.article-cover {
+  width: 100%;
+  height: 400rpx;
+  display: block;
+}
+
+/* 文章正文 */
+.article-body {
+  padding: 32rpx;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.article-text {
+  display: block;
+  width: 100%;
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: #374151;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* 评论区 */
+.comment-section {
+  padding: 32rpx;
+  background: #f9fafb;
+  margin-top: 32rpx;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.comment-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.comment-count {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.comment-item {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.comment-user {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.user-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.comment-time {
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.comment-content {
+  display: block;
+  font-size: 28rpx;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.empty-comment {
+  padding: 80rpx 32rpx;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 26rpx;
+}
+
+/* 底部操作栏 */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 32rpx;
+  background: #ffffff;
+  border-top: 1rpx solid #e5e7eb;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+}
+
+.comment-input {
+  flex: 1;
+  height: 72rpx;
+  background: #f3f4f6;
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 32rpx;
+}
+
+.input-placeholder {
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+}
+
+.action-icon {
+  font-size: 36rpx;
+}
+
+.action-icon.active {
+  color: #18a058;
+}
+
+/* 评论弹窗 */
+.comment-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #9ca3af;
+}
+
+.comment-textarea {
+  width: 100%;
+  min-height: 240rpx;
+  padding: 24rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  margin-bottom: 24rpx;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.char-count {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.submit-btn {
+  background: #18a058;
+  color: #ffffff;
+  border-radius: 48rpx;
+  padding: 16rpx 48rpx;
+  font-size: 28rpx;
+  border: none;
+}

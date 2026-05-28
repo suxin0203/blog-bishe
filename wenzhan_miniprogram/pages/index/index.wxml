@@ -1,0 +1,131 @@
+<!--pages/index/index.wxml-->
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-search" bindtap="goToSearch">
+        <text class="search-icon">🔍</text>
+      </view>
+      <text class="navbar-title">文栈博客</text>
+      <view class="navbar-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view class="content" style="padding-top: {{navbarHeight}}px;" scroll-y enhanced show-scrollbar="{{false}}" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
+    <!-- 轮播图 -->
+    <view class="swiper-container" wx:if="{{swiperList.length > 0}}">
+      <swiper class="swiper" indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#18a058" autoplay interval="5000" circular>
+        <swiper-item wx:for="{{swiperList}}" wx:key="id">
+          <view class="swiper-item" bindtap="goToArticle" data-id="{{item.article_id}}">
+            <image class="swiper-image" src="{{item.image_url}}" mode="aspectFill" />
+            <view class="swiper-content">
+              <text class="swiper-title">{{carouselNotice || item.title}}</text>
+              <text class="swiper-desc">{{carouselNoticeContent || item.description}}</text>
+            </view>
+          </view>
+        </swiper-item>
+      </swiper>
+    </view>
+
+    <!-- 分类横向滚动 -->
+    <view class="section category-section" wx:if="{{categories.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">分类</text>
+        <text class="section-more" bindtap="goToAllCategories">全部 ›</text>
+      </view>
+      <scroll-view class="category-scroll" scroll-x show-scrollbar="{{false}}">
+        <view class="category-scroll-content">
+          <view class="category-card" wx:for="{{categories}}" wx:key="id" data-type="category" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="goToArticleList">{{item.name}}</view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 标签云 -->
+    <view class="section tag-section" wx:if="{{tags.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">标签</text>
+      </view>
+      <view class="tag-cloud">
+        <view 
+          class="tag-item" 
+          wx:for="{{tags}}" 
+          wx:key="id"
+          data-type="tag"
+          data-id="{{item.id}}"
+          data-name="{{item.name}}"
+          bindtap="goToArticleList"
+        >
+          #{{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 热门文章 -->
+    <view class="section" wx:if="{{hotArticles.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">热门文章</text>
+      </view>
+      <view class="hot-list">
+        <view class="hot-item" wx:for="{{hotArticles}}" wx:key="id" bindtap="goToArticle" data-id="{{item.id}}">
+          <view class="hot-rank rank-{{index + 1}}">{{index + 1}}</view>
+          <view class="hot-content">
+            <text class="hot-title">{{item.title}}</text>
+            <text class="hot-meta">{{item.category_name}} · {{formatReadCount(item.views)}} 阅读</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 最新文章 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">最新文章</text>
+        <text class="section-more">下拉刷新</text>
+      </view>
+      <view class="article-list">
+        <view class="article-item card" wx:for="{{articles}}" wx:key="id" bindtap="goToArticle" data-id="{{item.id}}">
+          <!-- 有封面图 -->
+          <view class="article-with-cover" wx:if="{{item.cover_image}}">
+            <view class="article-info">
+              <text class="article-title">{{item.title}}</text>
+              <text class="article-summary">{{item.summary}}</text>
+            </view>
+            <image class="article-cover" src="{{item.cover_image}}" mode="aspectFill" />
+          </view>
+          
+          <!-- 无封面图 -->
+          <view class="article-no-cover" wx:else>
+            <text class="article-title">{{item.title}}</text>
+            <text class="article-summary">{{item.summary}}</text>
+          </view>
+
+          <!-- 标签和元信息 -->
+          <view class="article-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+            <text class="tag tag-primary" wx:for="{{item.tags}}" wx:key="id" wx:for-item="tag">{{tag.name}}</text>
+          </view>
+          
+          <view class="article-meta">
+            <text class="meta-item">{{item.category_name}}</text>
+            <text class="meta-divider">·</text>
+            <text class="meta-item">{{formatTime(item.created_at)}}</text>
+            <text class="meta-divider">·</text>
+            <text class="meta-item">{{formatReadCount(item.views)}} 阅读</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 加载更多 -->
+      <view class="loading-more" wx:if="{{loading}}">
+        <text>加载中...</text>
+      </view>
+      <view class="no-more" wx:if="{{!hasMore && articles.length > 0}}">
+        <text>没有更多了</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && articles.length === 0}}">
+      <text>暂无文章</text>
+    </view>
+  </scroll-view>
+</view>

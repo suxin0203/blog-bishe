@@ -18,9 +18,13 @@ async function createSession({ channel = 'pc', clientIp = null, userAgent = null
   const createdAt = now();
   const expiresAt = addMinutes(createdAt, ttlMinutes);
   const sceneId = generateSceneId();
+  
+  // 截断 user_agent 到 255 字符以避免数据库字段溢出（安卓微信 UA 通常很长）
+  const truncatedUserAgent = userAgent ? userAgent.substring(0, 255) : null;
+  
   await runQuery(
     'INSERT INTO wz_qr_login_sessions (scene_id, status, user_id, channel, temp_openid, bind_token, bind_token_expires_at, client_ip, user_agent, created_at, updated_at, expires_at) VALUES (?, ?, NULL, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?)',
-    [sceneId, 'pending', channel, clientIp, userAgent, createdAt, createdAt, expiresAt]
+    [sceneId, 'pending', channel, clientIp, truncatedUserAgent, createdAt, createdAt, expiresAt]
   );
   return { sceneId, expiresAt };
 }

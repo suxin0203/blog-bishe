@@ -19,12 +19,14 @@ module.exports = {
     { name: '标签', description: '标签管理' },
     { name: '评论', description: '文章评论' },
     { name: '点赞', description: '文章点赞' },
+    { name: '收藏', description: '文章收藏' },
     { name: '留言', description: '留言板' },
     { name: '全局配置', description: 'otherswitch 站点配置' },
     { name: '友情链接', description: '友链' },
     { name: '轮播图', description: '首页轮播' },
     { name: '积分商城', description: '商品、订单、积分流水' },
     { name: '看板', description: '统计数据与排行' },
+    { name: '微信登录', description: '小程序登录、扫码登录' },
   ],
   components: {
     securitySchemes: {
@@ -1114,6 +1116,321 @@ module.exports = {
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'days', in: 'query', schema: { type: 'integer' } }],
         responses: { 200: { description: '成功' } },
+      },
+    },
+
+    // ---------- 微信登录 ----------
+    '/wechat/openid/{code}': {
+      get: {
+        tags: ['微信登录'],
+        summary: '根据微信登录 code 换取 openid',
+        description: '小程序调用 wx.login() 获取 code 后，通过此接口换取 openid 和 session_key',
+        parameters: [
+          { name: 'code', in: 'path', required: true, schema: { type: 'string' }, description: '微信登录返回的 code' },
+        ],
+        responses: {
+          200: {
+            description: '成功返回 openid 和 session_key',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: '获取openid成功' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        session_key: { type: 'string', description: '会话密钥' },
+                        openid: { type: 'string', description: '用户唯一标识' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: '微信登录失败' },
+        },
+      },
+    },
+    '/wechat/userinfo/{openid}': {
+      get: {
+        tags: ['微信登录'],
+        summary: '根据 openid 获取用户信息',
+        description: '检查 openid 是否已绑定系统账号，已绑定则返回用户信息和 token',
+        parameters: [
+          { name: 'openid', in: 'path', required: true, schema: { type: 'string' }, description: '微信用户的 openid' },
+        ],
+        responses: {
+          200: {
+            description: '已绑定，返回用户信息和 token',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    code: { type: 'integer', example: 200 },
+                    message: { type: 'string', example: '登录成功' },
+                    token: { type: 'string', description: 'JWT Token' },
+                    data: { $ref: '#/components/schemas/User' },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: '未绑定账号',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    code: { type: 'integer', example: 0 },
+                    message: { type: 'string', example: '用户不存在' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+
+    // ---------- PC 扫码登录 ----------
+    '/qr-login/session': {
+      post: {
+        tags: ['微信登录'],
+        summary: '创建扫码登录会话（PC 端调用）',
+        description: 'PC 端创建扫码登录会话，返回 sceneId 用于生成小程序码',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  device_info: { type: 'string', description: '设备信息（可选）' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: '成功创建会话',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    code: { type: 'integer', example: 200 },
+                    message: { type: 'string', example: 'success' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        scene_id: { type: 'string', description: '场景ID，用于生成小程序码' },
+                        expires_at: { type: 'string', description: '过期时间' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/qr-login/session/{sceneId}': {
+      get: {
+        tags: ['微信登录'],
+        summary: '查询扫码登录会话状态（PC 端轮询）',
+        description: 'PC 端轮询此接口，检查用户是否已扫码确认登录',
+        parameters: [
+          { name: 'sceneId', in: 'path', required: true, schema: { type: 'string' }, description: '场景ID' },
+        ],
+        responses: {
+          200: {
+            description: '返回会话状态',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    code: { type: 'integer', example: 200 },
+                    message: { type: 'string' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        status: { type: 'string', enum: ['pending', 'scanned', 'confirmed', 'expired', 'cancelled'], description: '会话状态' },
+                        token: { type: 'string', description: '登录成功后返回的 token' },
+                        user: { $ref: '#/components/schemas/User', description: '登录成功后返回的用户信息' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+
+    // ---------- 小程序扫码登录 ----------
+    '/miniapp/qr-login/entry': {
+      post: {
+        tags: ['微信登录'],
+        summary: '小程序扫码入口（小程序端调用）',
+        description: '小程序扫码后调用此接口，上报 sceneId 和 openid',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['scene_id', 'openid'],
+                properties: {
+                  scene_id: { type: 'string', description: '从二维码中解析的场景ID' },
+                  openid: { type: 'string', description: '用户的 openid' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: '返回用户绑定状态',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    code: { type: 'integer', example: 200 },
+                    message: { type: 'string' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        is_bound: { type: 'boolean', description: '是否已绑定账号' },
+                        user: { $ref: '#/components/schemas/User', description: '已绑定时返回用户信息' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/miniapp/qr-login/register-and-confirm': {
+      post: {
+        tags: ['微信登录'],
+        summary: '注册并确认登录（小程序端调用）',
+        description: '用户未绑定账号时，注册新账号并确认登录',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['scene_id', 'openid', 'username', 'password'],
+                properties: {
+                  scene_id: { type: 'string', description: '场景ID' },
+                  openid: { type: 'string', description: '用户的 openid' },
+                  username: { type: 'string', description: '用户名' },
+                  password: { type: 'string', description: '密码' },
+                  email: { type: 'string', description: '邮箱（可选）' },
+                  nickname: { type: 'string', description: '昵称（可选）' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: '注册成功并确认登录',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    code: { type: 'integer', example: 200 },
+                    message: { type: 'string', example: '注册成功' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        user_id: { type: 'integer', description: '新注册的用户ID' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: '用户名已存在或参数错误' },
+        },
+      },
+    },
+    '/miniapp/qr-login/bind-and-confirm': {
+      post: {
+        tags: ['微信登录'],
+        summary: '绑定账号并确认登录（小程序端调用）',
+        description: '用户已有账号时，绑定 openid 并确认登录',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['scene_id', 'openid', 'username', 'password'],
+                properties: {
+                  scene_id: { type: 'string', description: '场景ID' },
+                  openid: { type: 'string', description: '用户的 openid' },
+                  username: { type: 'string', description: '用户名' },
+                  password: { type: 'string', description: '密码' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: '绑定成功并确认登录',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    code: { type: 'integer', example: 200 },
+                    message: { type: 'string', example: '绑定成功' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        user_id: { type: 'integer', description: '用户ID' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: '用户名或密码错误' },
+        },
+      },
+    },
+
+    // ---------- 积分流水（修正路径）----------
+    '/points/token/log': {
+      get: {
+        tags: ['积分商城'],
+        summary: '积分流水（需认证）',
+        description: '获取当前用户或指定用户的积分流水记录',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'userId', in: 'query', schema: { type: 'integer' }, description: '用户ID（管理员可指定）' },
+          { name: 'page', in: 'query', schema: { type: 'integer' } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: { 200: { description: '成功，data 为 { list, total }' } },
       },
     },
   },

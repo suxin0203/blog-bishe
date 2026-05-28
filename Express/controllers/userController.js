@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const userService = require('../services/userService');
 const pointsService = require('../services/pointsService');
 const { success, fail, error } = require('../common/response');
+const runQuery = require('../common/utils');
 
 const ADMIN_POINT_REASON_PREFIX = 'admin_adjust:';
 
@@ -94,7 +95,22 @@ exports.getCurrentUser = async (req, res) => {
     if (!req.user?.id) return fail(res, '请登录', 401);
     const user = await userService.findById(req.user.id);
     if (!user) return fail(res, '用户不存在', 404);
-    return success(res, formatUser(user), 'ok');
+    
+    // 统计文章数和评论数
+    const articleCountRows = await runQuery(
+      'SELECT COUNT(*) as count FROM wz_articles WHERE author_id = ? AND status IN (0, 1)',
+      [req.user.id]
+    );
+    const commentCountRows = await runQuery(
+      'SELECT COUNT(*) as count FROM wz_comments WHERE user_id = ?',
+      [req.user.id]
+    );
+    
+    const userData = formatUser(user);
+    userData.article_count = articleCountRows[0]?.count || 0;
+    userData.comment_count = commentCountRows[0]?.count || 0;
+    
+    return success(res, userData, 'ok');
   } catch (e) {
     console.error(e);
     return error(res, '操作错误');

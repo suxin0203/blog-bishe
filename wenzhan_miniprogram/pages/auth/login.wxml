@@ -1,0 +1,107 @@
+<!--pages/auth/login.wxml-->
+<view class="page">
+  <view class="decor decor-left"></view>
+  <view class="decor decor-right"></view>
+
+  <view class="container">
+    <view class="brand-section">
+      <view class="logo-card">
+        <text class="logo-text">文</text>
+      </view>
+      <text class="app-name">文栈博客</text>
+      <text class="app-desc">记录思考，沉淀知识</text>
+    </view>
+
+    <view class="panel" wx:if="{{loginType === 'wechat'}}">
+      <view class="panel-header">
+        <text class="panel-title">欢迎回来</text>
+        <text class="panel-subtitle">使用微信快速登录，继续你的阅读与创作</text>
+      </view>
+
+      <button class="primary-btn wechat-login-btn" bindtap="handleWechatLogin" disabled="{{loading}}" hover-class="primary-btn-hover">
+        <view class="btn-content">
+          <view class="btn-loading" wx:if="{{loading}}"></view>
+          <text class="btn-icon" wx:else>🔐</text>
+          <text class="btn-text">{{loading ? '正在登录' : '微信一键登录'}}</text>
+        </view>
+      </button>
+
+      <view class="panel-footer">
+        <text class="tip-text">首次使用需注册或绑定已有账号</text>
+      </view>
+    </view>
+
+    <view class="panel form-section" wx:if="{{loginType === 'register'}}">
+      <view class="form-header">
+        <text class="back-btn" bindtap="backToWechat">返回</text>
+        <view class="form-title-wrap">
+          <text class="form-title">注册新账号</text>
+          <text class="form-subtitle">注册后将自动绑定当前微信</text>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <input class="form-input" placeholder="用户名（至少4个字符）" value="{{username}}" bindinput="onUsernameInput" maxlength="20" />
+      </view>
+      <view class="form-group">
+        <input class="form-input" placeholder="密码（至少4个字符）" type="password" value="{{password}}" bindinput="onPasswordInput" maxlength="20" />
+      </view>
+      <view class="form-group">
+        <input class="form-input" placeholder="邮箱（用于找回密码）" type="text" value="{{email}}" bindinput="onEmailInput" />
+      </view>
+      <view class="form-group captcha-group">
+        <view class="captcha-question">
+          <text class="captcha-text">{{captchaNum1}} + {{captchaNum2}} = ?</text>
+          <text class="captcha-refresh" bindtap="getCaptcha">{{captchaLoading ? '刷新中' : '刷新'}}</text>
+        </view>
+        <input class="form-input" placeholder="请输入验证码答案" type="number" value="{{captchaAnswer}}" bindinput="onCaptchaInput" />
+      </view>
+
+      <button class="primary-btn submit-btn" bindtap="handleRegister" disabled="{{loading}}" hover-class="primary-btn-hover">
+        <view class="btn-content">
+          <view class="btn-loading light" wx:if="{{loading}}"></view>
+          <text class="btn-text">{{loading ? '正在注册' : '注册并绑定微信'}}</text>
+        </view>
+      </button>
+
+      <view class="switch-type">
+        <text class="switch-text" bindtap="switchLoginType" data-type="bind">已有账号？去绑定</text>
+      </view>
+    </view>
+
+    <view class="panel form-section" wx:if="{{loginType === 'bind'}}">
+      <view class="form-header">
+        <text class="back-btn" bindtap="backToWechat">返回</text>
+        <view class="form-title-wrap">
+          <text class="form-title">绑定已有账号</text>
+          <text class="form-subtitle">绑定后可使用微信一键登录</text>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <input class="form-input" placeholder="用户名（至少4个字符）" value="{{username}}" bindinput="onUsernameInput" maxlength="20" />
+      </view>
+      <view class="form-group">
+        <input class="form-input" placeholder="密码（至少4个字符）" type="password" value="{{password}}" bindinput="onPasswordInput" maxlength="20" />
+      </view>
+      <view class="form-group captcha-group">
+        <view class="captcha-question">
+          <text class="captcha-text">{{captchaNum1}} + {{captchaNum2}} = ?</text>
+          <text class="captcha-refresh" bindtap="getCaptcha">{{captchaLoading ? '刷新中' : '刷新'}}</text>
+        </view>
+        <input class="form-input" placeholder="请输入验证码答案" type="number" value="{{captchaAnswer}}" bindinput="onCaptchaInput" />
+      </view>
+
+      <button class="primary-btn submit-btn" bindtap="handleBind" disabled="{{loading}}" hover-class="primary-btn-hover">
+        <view class="btn-content">
+          <view class="btn-loading light" wx:if="{{loading}}"></view>
+          <text class="btn-text">{{loading ? '正在绑定' : '登录并绑定微信'}}</text>
+        </view>
+      </button>
+
+      <view class="switch-type">
+        <text class="switch-text" bindtap="switchLoginType" data-type="register">没有账号？去注册</text>
+      </view>
+    </view>
+  </view>
+</view>

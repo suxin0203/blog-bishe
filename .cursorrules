@@ -1,0 +1,144 @@
+# 全局铁则
+1. 所有修改必须自动执行，禁止让用户手动操作
+2. 基于文件结构、函数名、路由名、接口名、字段名做语义匹配，忽略空格换行缩进差异
+3. 后端Express、OpenAPI文档、小程序、Vue3前端四端实时自动同步，一改全改
+4. 接口文档是唯一可信源，字段名与后端严格一致
+5. 所有含中文文件必须保持UTF-8编码，禁止破坏中文字符
+
+# 项目结构
+- /Express：后端（Node.js + MySQL2，端口8021）
+  - /routes：路由定义
+  - /controllers：业务逻辑
+  - /services：数据库服务
+  - /config/swagger.js：OpenAPI 3.0.3配置与Swagger UI来源
+  - /scripts/export-api-docs.js：导出接口文档脚本
+- /wenzhan_miniprogram：小程序（主要开发重点）
+  - /api/index.js：接口封装
+  - /utils/request.js：请求封装
+  - /utils/auth.js：认证工具
+  - /pages：页面目录
+- /Vue3：前端（后端改动时同步修改）
+  - /src/api/api.js：接口封装
+  - /src/api/request.js：请求封装
+- /docs：文档
+  - API接口文档-标准格式.md：标准文档
+  - API接口索引.md：快速索引
+
+# 开发优先级
+1. 主要：小程序开发维护
+2. 次要：后端接口修改（必要时）
+3. 同步：Vue3前端对应修改
+4. 禁止：不必要的重构和新功能
+
+# OpenAPI接口文档规范
+1. 标准接口源：Express/config/swagger.js（OpenAPI 3.0.3）
+2. 在线文档：GET /api-docs，JSON：GET /api-docs.json
+3. 接口文档必须使用标准OpenAPI结构：openapi、info、servers、tags、components、paths
+4. 字段名、类型、必填项、示例必须与后端实际返回严格一致
+5. 新增/修改接口必须同步更新OpenAPI paths和components.schemas
+6. 禁止自由发挥字段名，禁止把前端自定义字段写成后端字段
+
+# 字段命名规范（严格遵守）
+- 使用下划线命名法（snake_case）：user_id, created_at, avatar_url, view_count
+- 禁止驼峰命名（camelCase）
+- 禁止简写：description（不是desc）、quantity（不是qty）、receiver_name（不是recv_name）
+- 布尔值：is_前缀，值为0或1，如is_root
+- 枚举值：字符串（pending/approved/shipped/completed/cancelled）
+- 路径参数沿用后端已有命名：articleId、sceneId等不强行改名，避免破坏路由
+
+# 统一响应格式
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {}
+}
+```
+特殊历史接口按后端实际保留，如/wechat/openid/{code}返回{message,data}。
+
+# 核心接口路径
+## 微信登录
+- GET /wechat/openid/{code}
+- GET /wechat/userinfo/{openid}
+
+## 扫码登录
+- POST /qr-login/session
+- GET /qr-login/session/{sceneId}
+- GET /qr-login/session/{sceneId}/code.png
+- POST /miniapp/qr-login/entry
+- POST /miniapp/qr-login/register-and-confirm
+- POST /miniapp/qr-login/bind-and-confirm
+
+## 积分系统
+- GET /points/token/log（需认证）
+- GET /points/goods
+- GET /points/goods/{id}
+- POST /points/orders（需认证）
+- GET /points/orders（需认证）
+- GET /points/orders/{id}（需认证）
+- PUT /points/token/orders/{id}（需认证）
+
+## 文章系统
+- GET /articles
+- GET /articles/{id}
+- GET /articles/top
+- GET /articles/archive
+- POST /articles/token/（需认证）
+- PUT /articles/token/{id}（需认证）
+- DELETE /articles/token/{id}（需认证）
+- PUT /articles/token/{id}/restore（需认证）
+
+## 用户系统
+- POST /users/register
+- POST /users/login
+- GET /users/me（需认证）
+- GET /users/captcha
+
+# 后端修改流程
+1. 确认Express/app.js路由挂载和routes实际路径
+2. 更新Express控制器和路由
+3. 更新Express/config/swagger.js OpenAPI文档
+4. 同步小程序/api/index.js和相关页面
+5. 同步Vue3/src/api/api.js和相关页面
+6. 更新docs文档
+7. 验证字段、路径、认证方式100%对齐
+
+# 小程序开发流程
+1. 确认接口是否存在（优先查Express/config/swagger.js和/api-docs.json）
+2. 接口不存在则先开发后端并同步OpenAPI
+3. 在/api/index.js添加封装
+4. 页面中通过/api/index.js调用接口，禁止散落wx.request
+5. 处理响应更新UI
+6. 测试页面、弹窗、登录态、接口报错
+
+# 认证方式
+- JWT Token，有效期10小时
+- 路径包含/token/需要认证
+- 小程序使用{needAuth: true}参数
+- request.js统一添加Authorization: Bearer {token}
+
+# 编码与文件修改规则（极重要）
+1. 所有JS/WXML/WXSS/JSON/MD文件必须保持UTF-8编码
+2. 禁止使用PowerShell Get-Content/Set-Content/Out-File批量替换含中文文件，容易把中文变成????或乱码
+3. 禁止用Shell命令重写含中文源码；含中文内容必须用编辑工具直接写入或精确替换
+4. 修改后必须抽查中文弹窗文字：wx.showModal、wx.showToast、console中文、页面文案
+5. 若出现????、�、æ、ç、è、é、ï等乱码，立即重写受影响文件，不能只修一行
+6. 小程序常见中文弹窗在utils/auth.js、pages/auth/login.js、utils/request.js、pages/*/*.js
+
+# 禁止行为
+- 禁止让用户手动替换代码
+- 禁止只改一端不同步其他端
+- 禁止字段名大小写拼写不一致
+- 禁止使用驼峰命名替代后端snake_case字段
+- 禁止简写字段名
+- 禁止不必要的重构
+- 禁止修改已稳定代码（除非必要）
+- 禁止用命令行批量替换导致中文编码损坏
+
+# AI编辑规则
+1. 优先匹配路由名、函数名、变量名、注释标记
+2. 忽略空格、换行、缩进差异
+3. 格式差异自动统一后替换
+4. 禁止报错"字符串不匹配"后让用户手动处理
+5. 改动顺序：确认后端→更新OpenAPI→更新小程序→更新Vue3→更新文档→验证对齐
+6. 修复编码问题后必须重新读取文件确认中文正常
