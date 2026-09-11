@@ -176,6 +176,7 @@ import MyFooterVue from "@/components/MyFooter.vue";
 import MyHeaderVue from "@/components/MyHeader.vue";
 import MyCarouselVue from "@/components/MyCarousel.vue";
 import { AdminStore } from "@/stores/AdminStore";
+import { DEFAULT_AVATAR_URL } from "@/common/constants";
 import { NIcon } from "naive-ui";
 import axios from "axios";
 import {
@@ -203,7 +204,7 @@ const displayUsername = ref(
   (nickname || username || "未登录") + (is_root ? "👑" : "")
 );
 const displayAvatarUrl = ref(
-  avatar_url || "https://api.suxin23.cn/upload/avatar.png"
+  avatar_url || DEFAULT_AVATAR_URL
 );
 const friendUrl = ref([]);
 const promoCard = ref(null);
@@ -269,7 +270,6 @@ const getFriendslink = async () => {
 const logout = () => {
   // delToken
   adminStore.delToken();
-  console.log("退出登录");
   window.location.reload();
 };
 // 获取全部分类

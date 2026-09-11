@@ -16,13 +16,7 @@ export default defineConfig({
   ],
   server: {
     host: "0.0.0.0", //内网访问
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
+    // 开发时前端直连 VITE_BASE_URL 指向的后端地址，无需代理
   },
   resolve: {
     alias: {

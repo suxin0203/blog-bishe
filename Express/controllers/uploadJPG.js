@@ -86,15 +86,15 @@ exports.lbtUpload = async (req, res, next) => {
       process.cwd() + "/public/upload/Filerelay/" + file.filename,
       process.cwd() + "/public/upload/lbt/" + file_name,
     )
-    ret_files.push("upload/lbt/" + file_name)
+    ret_files.push(`/upload/lbt/${file_name}`)
   }
   res.send(
     {
       "errno": 0, // 注意：值是数字，不能是字符串
       "isShow": true,
       "data": {
-        "url": ret_files[0], // 图片 src ，必须
-        "href": `${getPublicBaseUrl(req)}/${ret_files[0]}` // 图片的链接，非必须
+        "url": ret_files[0], // 图片 src，统一相对路径（与富文本上传一致），前端渲染时再拼接域名
+        "href": `${getPublicBaseUrl(req)}${ret_files[0]}` // 图片的链接，非必须
       }
     }
   )
@@ -115,8 +115,8 @@ exports.getImageList = (req, res) => {
         const fileExt = path.extname(file);
         if (imageExtensions.includes(fileExt.toLowerCase())) {
           const fileName = file.substring(0, file.lastIndexOf('.'));
-          const baseUrl = getPublicBaseUrl(req);
-          const fileUrl = `${baseUrl}/upload/lbt/${file}`;
+          // 统一返回相对路径，避免返回值随部署域名/端口变化
+          const fileUrl = `/upload/lbt/${file}`;
 
           images.push({
             id: fileName,

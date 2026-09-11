@@ -345,7 +345,6 @@ const addActivityfun = async (data) => {
 const handleValidateButtonClick = async () => {
   // 校验表单
   formRef.value.validate().then(async (valid) => {
-    console.log("valid", valid);
     if (valid) {
       dialog.warning({
         title: "提示",
@@ -358,7 +357,6 @@ const handleValidateButtonClick = async () => {
         },
       });
     } else {
-      console.log("fail");
     }
   });
 };

@@ -110,7 +110,6 @@ const cleanData = (data) => {
     date2.setDate(date2.getDate() - 7);
     return `${date2.getMonth() + 1}/${date2.getDate()}/${date2.getFullYear()}`;
   });
-  console.log("dateArr2",dateArr2);
   let dataArr2 = [];
   dateArr2.forEach((item) => {
     let count = 0;
@@ -123,7 +122,6 @@ const cleanData = (data) => {
     });
     dataArr2.push(count);
   });
-  console.log("dataArr2",dataArr2);
   // 重新赋值
   dataArr2.forEach((item, index) => {
     option.series[1].data.push(item);

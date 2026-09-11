@@ -27,11 +27,9 @@
           <div class="section-content upload-section">
             <n-upload
               v-if="showimg"
-              :action="axios.defaults.baseURL + '/upload/token/lbt_upload'"
-              :headers="{ Authorization: 'Bearer ' + token }"
+              :custom-request="customLbtRequest"
               list-type="image-card"
               :default-file-list="fileList"
-              @finish="handleFinish"
               @remove="handleRemove"
               class="upload-area"
             >
@@ -264,7 +262,7 @@
                     <n-input v-model:value="siteData.site_logo_url" placeholder="留空则使用默认 LOGO" clearable />
                   </n-form-item>
                   <n-form-item label="默认头像链接">
-                    <n-input v-model:value="siteData.default_avatar_url" placeholder="用户无头像时显示的图片，如 https://api.suxin23.cn/upload/avatar.png" clearable />
+                    <n-input v-model:value="siteData.default_avatar_url" placeholder="用户无头像时显示的图片 URL，留空则使用前端内置默认头像" clearable />
                   </n-form-item>
                   <n-form-item>
                     <n-button type="primary" block @click="saveSiteBasic">保存站点信息</n-button>
@@ -363,15 +361,46 @@ import {
 } from "@vicons/ionicons5";
 import { AdminStore } from "@/stores/AdminStore";
 import { getOtherswitch, updateOtherswitch, createOtherswitch, getSwiperList, deleteSwiperById, addSwiper } from "@/api/api";
+import request from "@/api/request";
 
 const adminStore = AdminStore();
 const message = inject("message");
 const axios = inject("axios");
 const dialog = useDialog();
-const token = localStorage.getItem("token");
 
 let fileList = ref([]);
 let showimg = ref(false);
+
+/** 相对路径的图片地址按当前环境 API 域名补全，用于后台预览展示 */
+const resolveAssetUrl = (url) => {
+  if (!url) return "";
+  if (/^https?:\/\//.test(url)) return url;
+  const base = (axios?.defaults?.baseURL || import.meta.env.VITE_BASE_URL || "").replace(/\/$/, "");
+  return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
+};
+
+/**
+ * 轮播图上传走 axios 实例（custom-request）：
+ * token 由拦截器实时读取、401 自动刷新，避免初始化时固化过期 token；
+ * 上传成功后图片地址以后端归一化的相对路径落库，本地/线上/小程序通用
+ */
+const customLbtRequest = async ({ file, onFinish, onError }) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file.file);
+    const res = await request.post("/upload/token/lbt_upload", formData);
+    const url = res?.data?.url;
+    if (!url) throw new Error(res?.message || "上传返回数据异常");
+    await addSwiper({ image_url: url });
+    message.info("上传成功");
+    onFinish();
+    loadlbt();
+  } catch (e) {
+    message.error(e?.message || "上传失败，请重试");
+    loadlbt();
+    onError();
+  }
+};
 
 let darkthem = ref(adminStore.globalOptions.find((item) => item.name === "darkthem" || item.name === "darktheme"));
 let themeSwitchValue = ref(darkthem.value?.value ?? 0);
@@ -499,37 +528,9 @@ const loadlbt = async () => {
     id: s.id,
     name: String(s.id),
     status: "finished",
-    url: s.image_url,
+    url: resolveAssetUrl(s.image_url),
   }));
   showimg.value = true;
-};
-
-const handleFinish = ({ file, event }) => {
-  let data = null;
-  try {
-    const raw = event?.target?.response;
-    if (raw) {
-      const body = typeof raw === "string" ? JSON.parse(raw) : raw;
-      data = body?.data;
-    }
-    if (!data?.url && file?.response?.data) data = file.response.data;
-  } catch (_) {}
-  if (!data?.url) {
-    message.error("上传返回数据异常");
-    loadlbt();
-    return;
-  }
-  const baseURL = (axios?.defaults?.baseURL || import.meta.env.VITE_BASE_URL || "").replace(/\/$/, "");
-  const imageUrl = baseURL ? `${baseURL}/${data.url.replace(/^\//, "")}` : `/${data.url.replace(/^\//, "")}`;
-  addSwiper({ image_url: imageUrl })
-    .then(() => {
-      message.info("上传成功");
-      loadlbt();
-    })
-    .catch(() => {
-      message.error("保存轮播记录失败");
-      loadlbt();
-    });
 };
 
 const handleRemove = ({ file }) => {

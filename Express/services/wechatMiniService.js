@@ -78,23 +78,37 @@ async function code2Session(code) {
   return data;
 }
 
-async function getPcLoginMiniProgramCode(sceneId) {
-  const buf = await getPcLoginMiniProgramCodeBuffer(sceneId);
+// 扫码可打开的小程序版本：release 正式版 / trial 体验版 / develop 开发版
+const ENV_VERSIONS = ['release', 'trial', 'develop'];
+
+/**
+ * 解析扫码要打开的小程序版本：
+ * 1. 前端手动指定的优先（正式版槽位可能临时部署其他项目，需能手动切到体验版/开发版保底）
+ * 2. 未指定时按既有规则：环境变量 > 生产 release / 开发 trial
+ * 非法值一律回退到默认规则，不会透传给微信接口
+ */
+function resolveEnvVersion(requested) {
+  const v = requested == null ? '' : String(requested).trim().toLowerCase();
+  if (ENV_VERSIONS.includes(v)) return v;
+  const isProd = process.env.NODE_ENV === 'production';
+  return process.env.WX_MINIAPP_ENV_VERSION || (isProd ? 'release' : 'trial');
+}
+
+async function getPcLoginMiniProgramCode(sceneId, envVersion) {
+  const buf = await getPcLoginMiniProgramCodeBuffer(sceneId, envVersion);
   const base64 = Buffer.from(buf, 'binary').toString('base64');
   return `data:image/png;base64,${base64}`;
 }
 
-async function getPcLoginMiniProgramCodeBuffer(sceneId) {
+async function getPcLoginMiniProgramCodeBuffer(sceneId, envVersion) {
   const accessToken = await getAccessToken();
   const { loginPage } = getConfig();
   const url = `https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${accessToken}`;
-  const isProd = process.env.NODE_ENV === 'production';
   const payload = {
     scene: sceneId,
     check_path: false,
     width: 512,
-    // 生产默认 release；开发默认 trial（体验版）
-    env_version: process.env.WX_MINIAPP_ENV_VERSION || (isProd ? 'release' : 'trial'),
+    env_version: resolveEnvVersion(envVersion),
   };
   // 仅当显式配置了页面路径时才带上 page；否则使用小程序启动页
   if (loginPage) {
@@ -125,6 +139,7 @@ async function getPcLoginMiniProgramCodeBuffer(sceneId) {
 
 module.exports = {
   code2Session,
+  resolveEnvVersion,
   getPcLoginMiniProgramCode,
   getPcLoginMiniProgramCodeBuffer,
 };

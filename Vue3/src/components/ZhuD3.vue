@@ -183,8 +183,6 @@ const draw1 = () => {
     .x(width / 2)
     .y(height / 2);
   //在浏览器的控制台输出
-  console.log(nodes);
-  console.log(edges);
 
   //绘制边
   var links = g
@@ -288,7 +286,6 @@ const draw2 = () => {
   var svg = d3.select("#circle").attr("width", 600).attr("height", 600);
   var width = svg.attr("width");
   var height = svg.attr("height");
-  console.log(width, height);
   // var g = svg
   // .append("g")
   // .attr("transform", "translate(" + marge.top + "," + marge.left + ")");
@@ -313,7 +310,6 @@ const draw2 = () => {
   var pieData = pie(dataset);
 
   //在浏览器的控制台打印pieData
-  console.log(pieData);
 
   var gs = svg
     .selectAll(".g")
@@ -322,7 +318,6 @@ const draw2 = () => {
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")"); //位置信息
 
-  console.log(gs);
 
   //绘制饼状图的各个扇形
   gs.append("path")

@@ -12,7 +12,7 @@ const POINTS_DAILY_LOGIN = 5;
 const CAPTCHA_TTL_MS = 5 * 60 * 1000; // 5 分钟
 const captchaStore = new Map();
 
-const secretKey = process.env.JWT_SECRET || 'suxin0203_Blog_mysql';
+const secretKey = require('../common/jwt');
 const saltRounds = 10;
 
 /** 账号/密码统一校验：不能为空，长度大于等于 4 即可 */

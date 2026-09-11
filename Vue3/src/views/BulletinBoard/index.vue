@@ -74,14 +74,12 @@
 
 <script scoped setup>
 import { ref, reactive, onMounted } from "vue";
-import { getActivityList } from "@/api/api";
-import { router } from "@/common/router";
+import { getPublicActivityList } from "@/api/api";
 import Linear from "@/views/BulletinBoard/components/Line.vue";
 import Bar from "@/views/BulletinBoard/components/Bar.vue";
 import Pie from "@/views/BulletinBoard/components/Pie.vue";
 import ChinaMap from "./components/ChinaMap.vue";
 import Graph from "@/views/BulletinBoard/components/Graph.vue";
-// import MenuTest from "./components/MenuTest.vue";
 
 let loading = ref(false);
 
@@ -121,19 +119,16 @@ const data = ref([]);
 
 const fetchActivityList = async () => {
   loading.value = true;
-  let res = await getActivityList(formValue.value);
-  if (res.code === 401) {
-    // router.push("/login");
-    setTimeout(() => {
-      router.push("/login");
-    }, 3000);
-    return;
+  try {
+    // 公开接口，游客可访问，不再触发 401 跳登录
+    const res = await getPublicActivityList(formValue.value);
+    data.value = res;
+    titleCountsData();
+  } catch (e) {
+    data.value = { data: [] };
+  } finally {
+    loading.value = false;
   }
-  console.log(res);
-  data.value = res;
-  loading.value = false;
-  // 运行统计title函数
-  titleCountsData();
 };
 
 // titleCounts数据统计

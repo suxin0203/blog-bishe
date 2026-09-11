@@ -45,7 +45,7 @@
             <n-avatar
               round
               :size="32"
-              :src="adminStore.avatar_url || defaultAvatarUrl || 'https://api.suxin23.cn/upload/avatar.png'"
+              :src="adminStore.avatar_url || defaultAvatarUrl || DEFAULT_AVATAR_URL"
               class="nav-avatar"
             />
           </n-dropdown>
@@ -80,6 +80,7 @@ import { useRoute, useRouter } from "vue-router";
 import { MAIN_NAV } from "@/common/mainNav.js";
 import { AdminStore } from "@/stores/AdminStore";
 import { updateUserInfo, getOtherswitch } from "@/api/api";
+import { DEFAULT_AVATAR_URL } from "@/common/constants";
 import logo from "@/assets/images/logo3.png";
 
 const message = inject("message");
@@ -97,9 +98,9 @@ onMounted(async () => {
     const byName = (name) => list.find((i) => i.name === name);
     siteName.value = (byName("site_name")?.content || "").trim();
     siteLogoUrl.value = (byName("site_logo_url")?.content || "").trim();
-    defaultAvatarUrl.value = (byName("default_avatar_url")?.content || "").trim() || "https://api.suxin23.cn/upload/avatar.png";
+    defaultAvatarUrl.value = (byName("default_avatar_url")?.content || "").trim() || DEFAULT_AVATAR_URL;
   } catch (_) {
-    defaultAvatarUrl.value = "https://api.suxin23.cn/upload/avatar.png";
+    defaultAvatarUrl.value = DEFAULT_AVATAR_URL;
   }
 });
 

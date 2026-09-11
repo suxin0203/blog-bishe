@@ -18,14 +18,27 @@ async function createSession({ channel = 'pc', clientIp = null, userAgent = null
   const createdAt = now();
   const expiresAt = addMinutes(createdAt, ttlMinutes);
   const sceneId = generateSceneId();
-  
+
   // 截断 user_agent 到 255 字符以避免数据库字段溢出（安卓微信 UA 通常很长）
   const truncatedUserAgent = userAgent ? userAgent.substring(0, 255) : null;
-  
-  await runQuery(
-    'INSERT INTO wz_qr_login_sessions (scene_id, status, user_id, channel, temp_openid, bind_token, bind_token_expires_at, client_ip, user_agent, created_at, updated_at, expires_at) VALUES (?, ?, NULL, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?)',
-    [sceneId, 'pending', channel, clientIp, truncatedUserAgent, createdAt, createdAt, expiresAt]
-  );
+
+  const insertSql = 'INSERT INTO wz_qr_login_sessions (scene_id, status, user_id, channel, temp_openid, bind_token, bind_token_expires_at, client_ip, user_agent, created_at, updated_at, expires_at) VALUES (?, ?, NULL, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?)';
+  try {
+    await runQuery(
+      insertSql,
+      [sceneId, 'pending', channel, clientIp, truncatedUserAgent, createdAt, createdAt, expiresAt]
+    );
+  } catch (e) {
+    // 兜底：个别环境 user_agent 列长度不足或编码超长时，放弃 UA 也不能让二维码生成失败
+    if (truncatedUserAgent && /Data too long|truncated|ER_DATA_TOO_LONG/i.test(String(e?.message))) {
+      await runQuery(
+        insertSql,
+        [sceneId, 'pending', channel, clientIp, null, createdAt, createdAt, expiresAt]
+      );
+    } else {
+      throw e;
+    }
+  }
   return { sceneId, expiresAt };
 }
 

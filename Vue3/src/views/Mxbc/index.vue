@@ -286,7 +286,6 @@ const type1286fun = async (data) => {
 const handleValidateButtonClick = async () => {
   // 校验表单
   formRef.value.validate().then(async (valid) => {
-    console.log("valid", valid);
     if (valid) {
       let stamp = new Date().getTime();
 
@@ -315,10 +314,8 @@ const handleValidateButtonClick = async () => {
       config.url = config.url + `?type__1286=${type1286fun(JSON.stringify(config.data)).type__1286}`;
 
 
-      console.log("config", config);
 
     } else {
-      console.log("fail");
     }
   });
 };

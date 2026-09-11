@@ -12,7 +12,7 @@
             <n-avatar
               round
               :size="44"
-              :src="adminStore.avatar_url || dashboardDefaultAvatar || 'https://api.suxin23.cn/upload/avatar.png'"
+              :src="adminStore.avatar_url || dashboardDefaultAvatar || DEFAULT_AVATAR_URL"
             />
             <div class="topbar-user-info">
             <span class="topbar-name">
@@ -145,6 +145,7 @@ import { reactive, ref, inject, h, defineComponent, computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { router, routes } from "@/common/router.js";
 import { getPointsLog, updateUserInfo } from "@/api/api";
+import { DEFAULT_AVATAR_URL } from "@/common/constants";
 import { CaretDownOutline, ChevronBackOutline, ChevronForwardOutline } from "@vicons/ionicons5";
 import { NIcon } from "naive-ui";
 import {
@@ -170,7 +171,7 @@ const route = useRoute();
 const collapsed = ref(false);
 const dashboardDefaultAvatar = computed(() => {
   const url = (adminStore.globalOptions?.find((i) => i.name === "default_avatar_url")?.content || "").trim();
-  return url || "https://api.suxin23.cn/upload/avatar.png";
+  return url || DEFAULT_AVATAR_URL;
 });
 
 const routeNameToMenuKey = {

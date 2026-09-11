@@ -31,13 +31,13 @@ export const AdminStore = defineStore(STORE_NAME, {
             localStorage.setItem(USERINFO_KEY, JSON.stringify(userInfo || {}));
             this.getAdminInfo();
         },
-        // 删除 token 并刷新
-        delToken() {
+        // 删除 token 与用户信息；reload=false 时只清状态不刷新页面（供 401 拦截器先提示再跳转）
+        delToken(reload = true) {
             this.token = null;
             localStorage.removeItem(TOKEN_KEY);
             localStorage.removeItem("refreshToken");
             localStorage.removeItem(USERINFO_KEY);
-            window.location.reload();
+            if (reload) window.location.reload();
         },
         // 从 localStorage 恢复用户信息（与后端 formatUser 字段一致：id, username, nickname, role, is_root 等）
         getAdminInfo() {

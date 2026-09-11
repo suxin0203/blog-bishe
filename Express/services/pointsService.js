@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { withTransaction } = require('../common/utils');
 const userService = require('./userService');
 
 // ---------- 积分商品 ----------
@@ -138,34 +139,56 @@ async function getOrderById(id) {
 async function createOrder({ user_id, goods_id, quantity = 1, receiver_name, receiver_phone, receiver_address, user_remark }) {
   const goods = await getGoodsById(goods_id);
   if (!goods || goods.status !== 1) throw new Error('商品不存在或已下架');
+  if (!Number.isInteger(quantity) || quantity < 1) throw new Error('兑换数量不合法');
   const total = goods.points_cost * quantity;
-  const userRows = await runQuery('SELECT points FROM wz_users WHERE id = ?', [user_id]);
-  if (!userRows.length || userRows[0].points < total) throw new Error('积分不足');
   if (goods.stock != null && goods.stock < quantity) throw new Error('库存不足');
 
-  await runQuery(
-    'INSERT INTO wz_points_orders (user_id, goods_id, quantity, points_cost, total_points, receiver_name, receiver_phone, receiver_address, user_remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [user_id, goods_id, quantity, goods.points_cost, total, receiver_name ?? null, receiver_phone ?? null, receiver_address ?? null, user_remark ?? null]
-  );
-  const rows = await runQuery('SELECT LAST_INSERT_ID() AS id');
-  const orderId = rows[0]?.id;
+  // 校验、建单、扣积分、写流水、扣库存在同一事务内完成；
+  // 扣减 SQL 自带余量条件，并发兑换时以 affectedRows 为准，杜绝负积分/超卖
+  return withTransaction(async (query) => {
+    const userRows = await query('SELECT points FROM wz_users WHERE id = ? FOR UPDATE', [user_id]);
+    if (!userRows.length) throw new Error('用户不存在');
+    if (userRows[0].points < total) throw new Error('积分不足');
+    if (goods.stock != null) {
+      const stockLeft = await query('SELECT stock FROM wz_points_goods WHERE id = ? FOR UPDATE', [goods_id]);
+      if (!stockLeft.length || stockLeft[0].stock < quantity) throw new Error('库存不足');
+    }
 
-  await runQuery('UPDATE wz_users SET points = points - ? WHERE id = ?', [total, user_id]);
-  await runQuery('INSERT INTO wz_user_points_log (user_id, `change`, reason) VALUES (?, ?, ?)', [
-    user_id,
-    -total,
-    'redeem_goods',
-  ]);
-  if (goods.stock != null) {
-    await runQuery('UPDATE wz_points_goods SET stock = stock - ? WHERE id = ?', [quantity, goods_id]);
-  }
+    await query(
+      'INSERT INTO wz_points_orders (user_id, goods_id, quantity, points_cost, total_points, receiver_name, receiver_phone, receiver_address, user_remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [user_id, goods_id, quantity, goods.points_cost, total, receiver_name ?? null, receiver_phone ?? null, receiver_address ?? null, user_remark ?? null]
+    );
+    const rows = await query('SELECT LAST_INSERT_ID() AS id');
+    const orderId = rows[0]?.id;
 
-  if (goods.type === 'title') {
-    await runQuery('UPDATE wz_points_orders SET status = ? WHERE id = ?', ['completed', orderId]);
-    await userService.update(user_id, { title: goods.name || '' });
-    return { orderId, isTitle: true, titleName: goods.name || '' };
-  }
-  return orderId;
+    const deducted = await query(
+      'UPDATE wz_users SET points = points - ? WHERE id = ? AND points >= ?',
+      [total, user_id, total]
+    );
+    if (!deducted.affectedRows) throw new Error('积分不足');
+
+    await query('INSERT INTO wz_user_points_log (user_id, `change`, reason) VALUES (?, ?, ?)', [
+      user_id,
+      -total,
+      'redeem_goods',
+    ]);
+
+    if (goods.stock != null) {
+      const stockCut = await query(
+        'UPDATE wz_points_goods SET stock = stock - ? WHERE id = ? AND stock >= ?',
+        [quantity, goods_id, quantity]
+      );
+      if (!stockCut.affectedRows) throw new Error('库存不足');
+    }
+
+    if (goods.type === 'title') {
+      await query('UPDATE wz_points_orders SET status = ? WHERE id = ?', ['completed', orderId]);
+      // 必须用事务内连接更新用户称号，走外部连接会与上面的 FOR UPDATE 行锁形成死锁
+      await query('UPDATE wz_users SET title = ? WHERE id = ?', [goods.name || '', user_id]);
+      return { orderId, isTitle: true, titleName: goods.name || '' };
+    }
+    return orderId;
+  });
 }
 
 // 更新订单状态

@@ -107,8 +107,8 @@ function request(options) {
             reject(responseData)
           }
         } else if (res.statusCode === 401) {
-          // Token 过期，尝试刷新
-          if (needAuth && app.globalData.refreshToken && !isRefreshing) {
+          // Token 过期，尝试刷新（有 refreshToken 就进队列等刷新结果，不再直接踢回登录页）
+          if (needAuth && app.globalData.refreshToken) {
             handleTokenExpired(options).then(resolve).catch(reject)
           } else {
             wx.showToast({
@@ -188,10 +188,11 @@ function handleTokenExpired(originalRequest) {
           'Content-Type': 'application/json'
         },
         success: (res) => {
-          if (res.statusCode === 200 && res.data.code === 0) {
-            // 保存新的 Token
-            const { token, refreshToken } = res.data.data
-            app.saveUserData({ token, refreshToken })
+          // 后端 /users/refresh 成功返回 { code: 200, token, data: userInfo }（不返回新 refreshToken，沿用旧的）
+          if (res.statusCode === 200 && res.data.code === 200 && res.data.token) {
+            // 保存新的 Token（refreshToken 不轮换，保留原值）
+            const { token } = res.data
+            app.saveUserData({ token, userInfo: res.data.data })
 
             // 重新发起队列中的请求
             requestQueue.forEach(item => {

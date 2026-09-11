@@ -230,7 +230,6 @@ const deleteCategory = async (category) => {
     onPositiveClick: async () => {
       let res = await deleteCategoryById(category.id);
       // 关闭弹窗
-      console.log(res);
       if (res.code == 200) {
         message.info(res.message);
         getCategories();

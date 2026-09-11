@@ -635,7 +635,7 @@ export function updatePointsOrderStatus(id, data) {
   })
 }
 
-// 活动列表/activity/
+// 活动列表/activity/（后台管理用，需要管理员/编辑权限）
 export function getActivityList(params) {
   return request({
     timeout: 10000,
@@ -645,7 +645,17 @@ export function getActivityList(params) {
   })
 }
 
-// 新增活动项目 （临时）
+// 公开活动列表（无需登录，供 /show /table 等展示页使用）
+export function getPublicActivityList(params) {
+  return request({
+    timeout: 10000,
+    url: '/activity/public/list',
+    method: 'get',
+    params
+  })
+}
+
+// 提交活动签到（注意：是签到接口，不是新增活动；真正的创建活动接口为 POST /activity/time）
 export function addActivity(data) {
   return request({
     url: '/activity/sign/',

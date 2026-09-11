@@ -171,6 +171,7 @@
 import { AdminStore } from "@/stores/AdminStore";
 import { reactive, ref, computed, inject, onMounted, h } from "vue";
 import { NAvatar, NTag, NSpace, NButton, NText, NInputNumber, NDivider, NRadioGroup, NRadioButton } from "naive-ui";
+import { DEFAULT_AVATAR_URL } from "@/common/constants";
 // import {router , routes} from "@/common/router.js";
 
 import {
@@ -297,7 +298,7 @@ const userColumns = [
     title: "头像",
     key: "avatar_url",
     width: 64,
-    render: (r) => h(NAvatar, { round: true, size: "small", src: r.avatar_url || "https://api.suxin23.cn/upload/avatar.png" }),
+    render: (r) => h(NAvatar, { round: true, size: "small", src: r.avatar_url || DEFAULT_AVATAR_URL }),
   },
   { title: "账号", key: "username", width: 110, ellipsis: { tooltip: true } },
   { title: "昵称", key: "nickname", width: 100, ellipsis: { tooltip: true } },

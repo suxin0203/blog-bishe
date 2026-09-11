@@ -3,7 +3,13 @@ import { AdminStore } from "@/stores/AdminStore";
 import { createDiscreteApi } from "naive-ui";
 import { router } from "../common/router";
 
-const adminStore = AdminStore();
+// Pinia store 必须在 app.use(createPinia()) 之后才能实例化，
+// 模块顶层实例化会在提前引入本文件的场景下抛 "no active Pinia"，因此延迟到使用时获取
+let _adminStore = null;
+function getAdminStore() {
+  if (!_adminStore) _adminStore = AdminStore();
+  return _adminStore;
+}
 const { message } = createDiscreteApi(["message"]);
 
 const instance = axios.create({
@@ -59,6 +65,7 @@ async function refreshAccessToken() {
   }
 
   localStorage.setItem('token', data.token);
+  const adminStore = getAdminStore();
   adminStore.token = data.token;
   if (data.data) {
     localStorage.setItem('userInfo', JSON.stringify(data.data));
@@ -69,8 +76,10 @@ async function refreshAccessToken() {
 }
 
 async function handle401AndRetry(config, msg) {
+  const adminStore = getAdminStore();
   if (!config || config._retry || config.url?.includes('/users/refresh')) {
-    adminStore.delToken();
+    // reload=true 会立即刷新页面，导致后面的提示与跳转不生效，这里只清登录态再软跳转
+    adminStore.delToken(false);
     message.error(msg || '登录已过期，请重新登录');
     router.push('/login');
     return Promise.reject(new Error(msg || '401'));
@@ -101,7 +110,7 @@ async function handle401AndRetry(config, msg) {
   } catch (err) {
     // 刷新失败，拒绝所有排队请求
     flushQueue(err, null);
-    adminStore.delToken();
+    getAdminStore().delToken(false);
     message.error(msg || '登录已过期，请重新登录');
     router.push('/login');
     return Promise.reject(err);
@@ -143,11 +152,7 @@ instance.interceptors.response.use(
       return handle401AndRetry(response.config, response.data?.message || '登录已过期，请重新登录');
     }
 
-    if (code === 403) {
-      message.error(response.data.message || '没有权限');
-    }
-
-    if (code && code !== 200) {
+    if (code && code !== 200 && code !== 403) {
       message.error(response.data.message || '请求失败');
     }
 

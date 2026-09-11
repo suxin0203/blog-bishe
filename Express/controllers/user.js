@@ -3,7 +3,7 @@ const db = require('../common/pool');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-const secretKey = 'suxin0203_Blog_mysql';
+const secretKey = require('../common/jwt');
 const saltRounds = 10;
 
 

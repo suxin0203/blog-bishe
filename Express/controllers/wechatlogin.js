@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const pointsService = require('../services/pointsService');
 const userService = require('../services/userService');
 
-const secretKey = process.env.JWT_SECRET || 'suxin0203_Blog_mysql';
+const secretKey = require('../common/jwt');
 const POINTS_DAILY_LOGIN = 5;
 
 function sanitizeUser(user) {

@@ -77,7 +77,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
 
-const secretKey = process.env.JWT_SECRET || 'suxin0203_Blog_mysql';
+const secretKey = require('./common/jwt');
 
 // 可选 Token 中间件：
 // 1. 只要请求头里带了 Authorization，就尝试解析 JWT

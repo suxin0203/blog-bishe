@@ -81,7 +81,6 @@ onMounted(() => {
 watch(
   () => props.optiondata,
   () => {
-    console.log(props.optiondata);
     option.series[0].data = props.optiondata.menu1;
     option.series[1].data = props.optiondata.menu2;
     chart.value.setOption(option);

@@ -570,7 +570,6 @@ loadTopArticles();
 
 // 图片点击放大
 const showImg = (e) => {
-  console.log(e.target.tagName);
   if (e.target.tagName == "IMG") {
     imgPreview.img = e.target.src;
     imgPreview.show = true;
@@ -596,7 +595,6 @@ const goDashboard = () => {
 
 const logout = () => {
   adminStore.delToken();
-  console.log("退出登录");
 };
 
 const promoCard = ref(null);

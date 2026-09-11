@@ -1,69 +1,92 @@
 const runQuery = require('../common/utils');
 
 
+// 活动列表查询（供后台与公开接口共用），支持模糊搜索和分页
+async function queryActivitys({ name, token, content, remarks, page = 1, limit = 10 }) {
+  let sql = 'SELECT * FROM activity WHERE 1=1';
+  let countSql = 'SELECT COUNT(*) as total FROM activity WHERE 1=1';
+  const values = [];
+  const countValues = [];
+
+  if (name) {
+    sql += ' AND name LIKE ?';
+    countSql += ' AND name LIKE ?';
+    values.push(`%${name}%`);
+    countValues.push(`%${name}%`);
+  }
+  if (token) {
+    sql += ' AND token LIKE ?';
+    countSql += ' AND token LIKE ?';
+    values.push(`%${token}%`);
+    countValues.push(`%${token}%`);
+  }
+  if (content) {
+    sql += ' AND content LIKE ?';
+    countSql += ' AND content LIKE ?';
+    values.push(`%${content}%`);
+    countValues.push(`%${content}%`);
+  }
+  if (remarks) {
+    sql += ' AND remarks LIKE ?';
+    countSql += ' AND remarks LIKE ?';
+    values.push(`%${remarks}%`);
+    countValues.push(`%${remarks}%`);
+  }
+
+  // 获取总记录数
+  const totalResult = await runQuery(countSql, countValues);
+  const total = totalResult[0].total;
+
+  // 添加分页
+  const offset = (page - 1) * limit;
+  sql += ' LIMIT ? OFFSET ?';
+  values.push(parseInt(limit), parseInt(offset));
+
+  const activity = await runQuery(sql, values);
+
+  // 格式化创建时间
+  activity.forEach(message => {
+    message.created_at = message.created_at.toLocaleString();
+  });
+
+  return {
+    code: 200,
+    message: '获取成功',
+    pagination: {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+    },
+    data: activity
+  };
+}
+
 // 获取所有活动项目，支持模糊搜索和分页
 exports.getAllActivitys = async (req, res, next) => {
   try {
-    const { name, token, content, remarks, page = 1, limit = 10 } = req.query;
-    let sql = 'SELECT * FROM activity WHERE 1=1';
-    let countSql = 'SELECT COUNT(*) as total FROM activity WHERE 1=1';
-    const values = [];
-    const countValues = [];
-
-    if (name) {
-      sql += ' AND name LIKE ?';
-      countSql += ' AND name LIKE ?';
-      values.push(`%${name}%`);
-      countValues.push(`%${name}%`);
-    }
-    if (token) {
-      sql += ' AND token LIKE ?';
-      countSql += ' AND token LIKE ?';
-      values.push(`%${token}%`);
-      countValues.push(`%${token}%`);
-    }
-    if (content) {
-      sql += ' AND content LIKE ?';
-      countSql += ' AND content LIKE ?';
-      values.push(`%${content}%`);
-      countValues.push(`%${content}%`);
-    }
-    if (remarks) {
-      sql += ' AND remarks LIKE ?';
-      countSql += ' AND remarks LIKE ?';
-      values.push(`%${remarks}%`);
-      countValues.push(`%${remarks}%`);
-    }
-
-    // 获取总记录数
-    const totalResult = await runQuery(countSql, countValues);
-    const total = totalResult[0].total;
-
-    // 添加分页
-    const offset = (page - 1) * limit;
-    sql += ' LIMIT ? OFFSET ?';
-    values.push(parseInt(limit), parseInt(offset));
-
-    const activity = await runQuery(sql, values);
-
-    // 格式化创建时间
-    activity.forEach(message => {
-      message.created_at = message.created_at.toLocaleString();
-    });
-
-    const responseData = {
-      code: 200,
-      message: '获取成功',
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-      },
-      data: activity
-    };
-
+    const responseData = await queryActivitys(req.query);
     res.json(responseData);
   } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '操作错误' });
+  }
+};
+
+// 公开活动列表：无需登录，供 /show、/table 等公开展示页使用。
+// activity 表不在标准建库脚本中，表不存在时返回空列表而不是 500。
+exports.getPublicActivitys = async (req, res, next) => {
+  try {
+    const responseData = await queryActivitys(req.query);
+    res.json(responseData);
+  } catch (error) {
+    if (['ER_NO_SUCH_TABLE', 'ER_BAD_TABLE_ERROR'].includes(error?.code)) {
+      return res.json({
+        code: 200,
+        message: '获取成功',
+        pagination: { total: 0, page: parseInt(req.query.page || 1), limit: parseInt(req.query.limit || 10) },
+        data: [],
+      });
+    }
     console.error(error);
     res.status(500).json({ error: '操作错误' });
   }

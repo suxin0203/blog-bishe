@@ -81,7 +81,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
-import { getActivityList } from "@/api/api";
+import { getPublicActivityList } from "@/api/api";
 
 // State variables
 const showRail = ref(true);
@@ -170,10 +170,17 @@ const serchData = () => {
 
 const fetchActivityList = async () => {
   loading.value = true;
-  let res = await getActivityList(formValue.value);
-  data.value = res.data;
-  pagination.itemCount = res.pagination.total;
-  loading.value = false;
+  try {
+    // 公开接口，游客可访问，不再触发 401 跳登录
+    const res = await getPublicActivityList(formValue.value);
+    data.value = res.data;
+    pagination.itemCount = res.pagination?.total ?? 0;
+  } catch (e) {
+    data.value = [];
+    pagination.itemCount = 0;
+  } finally {
+    loading.value = false;
+  }
 };
 
 onMounted(() => {

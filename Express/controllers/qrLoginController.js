@@ -7,7 +7,7 @@ const wechatMiniService = require('../services/wechatMiniService');
 const userService = require('../services/userService');
 const { success, fail, error } = require('../common/response');
 
-const secretKey = process.env.JWT_SECRET || 'suxin0203_Blog_mysql';
+const secretKey = require('../common/jwt');
 
 function now() {
   return new Date();
@@ -53,6 +53,9 @@ async function generateTokensForUser(user) {
 exports.createSession = async (req, res) => {
   try {
     const channel = req.body?.channel || 'pc';
+    // 前端可手动指定扫码打开的小程序版本（release/trial/develop），
+    // service 内做白名单校验，非法值回退默认规则
+    const envVersion = req.body?.env_version;
     const clientIp =
       req.headers['x-forwarded-for'] ||
       req.connection?.remoteAddress ||
@@ -65,7 +68,7 @@ exports.createSession = async (req, res) => {
       userAgent,
       ttlMinutes: 5,
     });
-    const miniProgramCode = await wechatMiniService.getPcLoginMiniProgramCode(sceneId);
+    const miniProgramCode = await wechatMiniService.getPcLoginMiniProgramCode(sceneId, envVersion);
     return success(
       res,
       {
@@ -159,7 +162,9 @@ exports.getMiniProgramCodePng = async (req, res) => {
   try {
     const sceneId = String(req.params.sceneId || '').trim();
     if (!sceneId) return fail(res, 'sceneId 不能为空');
-    const pngBuf = await wechatMiniService.getPcLoginMiniProgramCodeBuffer(sceneId);
+    // 版本参数随图请求传入：同一个扫码会话可重新取不同版本的码，无需重建会话
+    const envVersion = req.query.env_version;
+    const pngBuf = await wechatMiniService.getPcLoginMiniProgramCodeBuffer(sceneId, envVersion);
     res.setHeader('Content-Type', 'image/png');
     // 避免 Android WebView/代理缓存导致“刷新不出来”
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

@@ -28,6 +28,7 @@ import {
   watch
 } from "vue";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
+import request from "@/api/request";
 
 // 传入的height
 const props = defineProps({
@@ -42,7 +43,6 @@ const props = defineProps({
 });
 
 const server_url = inject("server_url");
-const token = localStorage.getItem("token");
 
 // 编辑器实例，必须用 shallowRef，重要！
 const editorRef = shallowRef();
@@ -51,15 +51,23 @@ const toolbarConfig = { excludeKeys: ["uploadVideo"] };
 const mode = ref("default");
 const editorConfig = { placeholder: "请输入内容..." };
 editorConfig.MENU_CONF = {};
-//图片上传地址
+// 图片上传：走 axios 实例（customUpload），
+// token 由请求拦截器实时读取并支持 401 自动刷新，避免组件初始化时固化过期 token 导致上传静默失败
 editorConfig.MENU_CONF["uploadImage"] = {
   // 小于该值就插入 base64 格式（而不上传），默认为 0
-  base64LimitSize: 10 * 1024, // 5kb
-  server: server_url + "/upload/token/rich_editor_upload",
-  headers: {
-    Authorization: `Bearer ${token}`,
+  base64LimitSize: 10 * 1024, // 10kb
+  async customUpload(file, insertFn) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await request.post("/upload/token/rich_editor_upload", formData);
+    if (res?.code === 200 && res?.data?.url) {
+      // 插入绝对地址，保证编辑器预览与已保存内容在不同环境下都可显示
+      const url = res.data.url.startsWith("http") ? res.data.url : `${server_url}${res.data.url}`;
+      insertFn(url, res.data.alt || "", res.data.href || url);
+    } else {
+      throw new Error(res?.message || "上传失败");
+    }
   },
-
 };
 
 editorConfig.MENU_CONF["insertImage"] = {

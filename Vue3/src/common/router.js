@@ -12,11 +12,6 @@ let routes = [
     component: () => import("@/views/MobilePage/index.vue"),
   },
   {
-    path: "/activity/mxbc",
-    name: "mxbc",
-    component: () => import("@/views/Mxbc/index.vue"),
-  },
-  {
     path: "/show",
     name: "show",
     component: () => import("@/views/BulletinBoard/index.vue"),
@@ -50,11 +45,6 @@ let routes = [
     path: "/leavemessage",
     name: "leavemessage",
     component: () => import("@/views/Sendmsg.vue"),
-  },
-  {
-    path: "/check199",
-    name: "check199",
-    component: () => import("@/views/Check199.vue"),
   },
   {
     path: "/detail",
@@ -130,7 +120,8 @@ let routes = [
         path: "/dashboard/otherset",
         name: "otherset",
         meta: { is_root: true },
-        component: () => import("@/views/dashboard/AdminSet.vue"),
+        // 注意：磁盘文件名是 Adminset.vue（小写 s），Linux 部署下大小写敏感，写错会直接构建失败
+        component: () => import("@/views/dashboard/Adminset.vue"),
       },
       {
         path: "/dashboard/pointsmall",

@@ -1,10 +1,5 @@
-// module.exports = {
-//   host: "47.109.90.45",
-//   user: "wz-blog",
-//   password: "js6NJEPaceA8bJfN",
-//   database: "wz-blog"
-// };
-
+// 数据库连接配置（线上 MySQL：47.109.90.45，库 wztest 即线上库）
+// 注：JWT 密钥统一从 common/jwt.js 取，不要在这里配置
 module.exports = {
   host: "47.109.90.45",
   user: "wztest",
