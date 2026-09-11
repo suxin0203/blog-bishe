@@ -833,6 +833,9 @@ const searchKeyword = (keyword) => {
         height: 100%;
         border-radius: var(--radius, 8px);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        // 卡片内任何超宽内容（长代码/大图）都在卡片边界内裁切，
+        // 保证卡片自身左右内边距视觉对称，不再出现"右边距消失"
+        overflow: hidden;
       }
     }
     &-r {
@@ -1005,47 +1008,10 @@ const searchKeyword = (keyword) => {
 
 @media screen and (max-width: 600px) {
   // 注意：不要用 100vw —— 它包含滚动条宽度，必产生横向溢出（本页"多出一块空白"的老 bug 根源）
+  // 顶部菜单复用 MyHeader 组件自身样式（min-height 52px），这里不要强设高度，
+  // 之前写死 height:120px 会在 52px 菜单下方留出大片空白
   .lbt {
     width: 100%;
-  }
-  .header {
-    height: 120px;
-    width: 100%;
-    background-color: #fff;
-  }
-  .nav-new {
-    height: 120px;
-    display: block;
-    width: 100%;
-  }
-  .nav-new-l {
-    width: 100%;
-    height: 60px;
-    &-menu {
-      width: 250px;
-      max-width: 100%;
-      a {
-        line-height: 70px;
-        font-size: 18px;
-        color: #888888;
-      }
-    }
-  }
-  .nav-new-l .logo {
-    height: 60px;
-    margin-left: 10px;
-  }
-  .nav-new-r {
-    width: 100%;
-    height: 60px;
-
-    &-search {
-      width: auto;
-      margin: 0 14px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-    }
   }
   .carousel1 {
     height: 300px;
@@ -1053,13 +1019,14 @@ const searchKeyword = (keyword) => {
 
   .main {
     width: 100%;
+    // 移动端收窄 .main 自身边距，与 .main-body 的 14px 外边距叠加后两侧各约 16px，保持对称
+    padding: 0 2px;
 
     &-hr {
       // display: none!important;
       height: 20px;
     }
 
-    // background-color: pink;
     &-body {
       display: block;
       &-l {

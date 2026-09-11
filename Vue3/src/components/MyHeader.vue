@@ -403,12 +403,12 @@ const goLogin = () => {
   }
   .nav-new-r {
     gap: 8px;
-    /* 让搜索框吃满剩余空间，修复手机宽度下被压到过窄的问题 */
+    /* 搜索框可弹性伸缩，但限定上限，避免把 logo 挤到边缘 */
     flex: 1 1 auto;
     justify-content: flex-end;
     min-width: 0;
   }
-  .nav-search { flex: 1 1 auto; max-width: none; }
+  .nav-search { flex: 1 1 auto; max-width: 160px; }
   .nav-back .nav-title-tag { display: none; }
   .nav-back .nav-back-btn { display: none; }
   .nav-avatar {
