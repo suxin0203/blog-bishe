@@ -1,30 +1,34 @@
 <!--pages/qr-login/index.wxml-->
 <view class="page">
   <view class="header">
-    <text class="header-title">PC 扫码登录确认</text>
+    <text class="header-title">扫码登录确认</text>
   </view>
 
   <view class="container">
-    <!-- PC 图标 -->
-    <view class="pc-icon">PC</view>
+    <!-- 来源端图标 -->
+    <view class="pc-icon">{{ clientInfo.is_mobile ? 'H5' : 'PC' }}</view>
 
     <!-- 标题 -->
-    <text class="title">是否确认登录电脑端？</text>
-    <text class="desc">确认后，电脑端文栈博客将获得与你当前账号一致的登录状态。</text>
+    <text class="title">是否确认登录{{ clientInfo.is_mobile ? '该' : '电脑' }}端？</text>
+    <text class="desc">确认后，{{ clientInfo.channel_label || '电脑端' }}文栈博客将获得与你当前账号一致的登录状态。</text>
 
-    <!-- 设备信息 -->
+    <!-- 设备信息（后端解析发起扫码请求的真实 UA 得到） -->
     <view class="device-info">
       <view class="info-item">
-        <text class="info-label">设备</text>
-        <text class="info-value">Chrome / Windows</text>
+        <text class="info-label">来源端</text>
+        <text class="info-value">{{ clientInfo.channel_label || '电脑网页' }}</text>
       </view>
       <view class="info-item">
+        <text class="info-label">设备</text>
+        <text class="info-value">{{ clientInfo.device || '未知设备' }}</text>
+      </view>
+      <view class="info-item" wx:if="{{clientInfo.ip}}">
         <text class="info-label">IP</text>
-        <text class="info-value">192.168.*.*</text>
+        <text class="info-value">{{ clientInfo.ip }}</text>
       </view>
       <view class="info-item">
         <text class="info-label">状态</text>
-        <text class="info-value status-pending">pending</text>
+        <text class="info-value status-pending">待确认</text>
       </view>
       <view class="info-item">
         <text class="info-label">有效期</text>

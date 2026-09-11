@@ -7,7 +7,9 @@ Page({
     sceneId: null,
     loading: false,
     needBind: false,
-    bindToken: null
+    bindToken: null,
+    // 扫码来源端的真实信息（后端解析 UA 返回），无数据时回退到通用文案
+    clientInfo: null
   },
 
   onLoad(options) {
@@ -67,6 +69,11 @@ Page({
       })
 
       console.log('小程序入口返回:', res)
+
+      // 展示真实的扫码来源端信息（设备/通道/IP 脱敏），替代页面上写死的假数据
+      if (res.client) {
+        this.setData({ clientInfo: res.client })
+      }
 
       if (res.action === 'login_ok') {
         // 已绑定，直接确认登录成功

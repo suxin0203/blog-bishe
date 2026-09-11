@@ -980,30 +980,50 @@ const searchKeyword = (keyword) => {
   color: gray;
 }
 
-@media screen and (max-width: 600px) {
-  html,
-  body {
-    display: flex;
-    width: 100vw;
+// 富文本内容防横向溢出：宽图、长代码行曾把页面撑出可横滑的空白区域
+.editor-content-view {
+  overflow-wrap: break-word;
+  :deep(img) {
+    max-width: 100% !important;
+    height: auto !important;
   }
+  :deep(pre) {
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  :deep(video),
+  :deep(iframe) {
+    max-width: 100%;
+  }
+  :deep(table) {
+    max-width: 100%;
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  // 注意：不要用 100vw —— 它包含滚动条宽度，必产生横向溢出（本页"多出一块空白"的老 bug 根源）
   .lbt {
-    width: 100vw;
+    width: 100%;
   }
   .header {
     height: 120px;
-    width: 100vw;
+    width: 100%;
     background-color: #fff;
   }
   .nav-new {
     height: 120px;
     display: block;
-    width: 100vw;
+    width: 100%;
   }
   .nav-new-l {
-    width: 100vw;
+    width: 100%;
     height: 60px;
     &-menu {
       width: 250px;
+      max-width: 100%;
       a {
         line-height: 70px;
         font-size: 18px;
@@ -1016,12 +1036,12 @@ const searchKeyword = (keyword) => {
     margin-left: 10px;
   }
   .nav-new-r {
-    width: 100vw;
+    width: 100%;
     height: 60px;
 
     &-search {
-      width: 95vw;
-      margin: 0 auto;
+      width: auto;
+      margin: 0 14px;
       height: 80px;
       display: flex;
       align-items: center;
@@ -1032,7 +1052,7 @@ const searchKeyword = (keyword) => {
   }
 
   .main {
-    width: 100vw;
+    width: 100%;
 
     &-hr {
       // display: none!important;
@@ -1043,12 +1063,12 @@ const searchKeyword = (keyword) => {
     &-body {
       display: block;
       &-l {
-        width: 95vw;
-        margin: 0 auto;
+        width: auto;
+        margin: 0 14px;
       }
       &-r {
-        width: 95vw;
-        margin: 10px auto;
+        width: auto;
+        margin: 10px 14px;
         &-class {
           display: none;
         }
@@ -1062,8 +1082,8 @@ const searchKeyword = (keyword) => {
 
 //富文本图片放大
 .imgDolg {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   position: fixed;
   z-index: 9999;
   background-color: rgba(56, 53, 53, 0.6);
@@ -1086,5 +1106,14 @@ const searchKeyword = (keyword) => {
     max-height: calc(100vh - 64px);
     min-width: 50%;
   }
+}
+</style>
+
+<style>
+/* 非作用域全局兜底：详情页富文本宽内容/历史 100vw 布局曾导致页面可横向滑出空白。
+   只禁横向，不影响纵向滚动与 sticky 侧边栏 */
+html,
+body {
+  overflow-x: hidden;
 }
 </style>

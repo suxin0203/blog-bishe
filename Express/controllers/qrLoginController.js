@@ -28,6 +28,66 @@ function pickSafeUser(u) {
   return rest;
 }
 
+const CLIENT_CHANNELS = ['pc', 'h5', 'wechat-h5'];
+
+/** IP 脱敏：IPv4 隐藏后两段，IPv6 只保留前三个组，其余截断 */
+function maskIp(ip) {
+  const s = String(ip || '').split(',')[0].trim();
+  if (!s) return '';
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(s)) {
+    const parts = s.split('.');
+    return `${parts[0]}.${parts[1]}.*.*`;
+  }
+  if (s.includes(':')) {
+    const groups = s.split(':').filter(Boolean);
+    return groups.length > 3 ? `${groups.slice(0, 3).join(':')}:…` : s;
+  }
+  return s.length > 12 ? `${s.slice(0, 12)}…` : s;
+}
+
+/**
+ * 从会话存储的真实 UA / 通道解析扫码来源端信息，供小程序确认页展示。
+ * UA 关键字参考：微信内置浏览器含 MicroMessenger，小程序 webview 额外含 miniProgram，
+ * 手机 UA 含 Mobile/Android/iPhone 等（https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webview.html）
+ */
+function describeClient(sess) {
+  const ua = String(sess?.user_agent || '');
+  const inWeChat = /MicroMessenger/i.test(ua);
+  const inMiniProgram = /miniProgram/i.test(ua);
+  const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua);
+
+  let os = '未知设备';
+  if (/Windows/i.test(ua)) os = 'Windows 电脑';
+  else if (/Macintosh|Mac OS X/i.test(ua)) os = 'Mac 电脑';
+  else if (/Android/i.test(ua)) os = 'Android 手机';
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS 设备';
+  else if (isMobile) os = '移动设备';
+
+  let browser = '浏览器';
+  if (inMiniProgram) browser = '小程序内置浏览器';
+  else if (inWeChat) browser = '微信内置浏览器';
+  else if (/Edg\//i.test(ua)) browser = 'Edge 浏览器';
+  else if (/QQBrowser/i.test(ua)) browser = 'QQ 浏览器';
+  else if (/Chrome|CriOS/i.test(ua)) browser = 'Chrome 浏览器';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox 浏览器';
+  else if (/Safari/i.test(ua)) browser = 'Safari 浏览器';
+
+  let channel = CLIENT_CHANNELS.includes(sess?.channel) ? sess.channel : 'pc';
+  const channelLabel =
+    channel === 'wechat-h5' ? '微信内网页' : channel === 'h5' ? '手机网页' : '电脑网页';
+
+  return {
+    channel,
+    channel_label: channelLabel,
+    device: `${os} · ${browser}`,
+    os,
+    browser,
+    is_mobile: isMobile,
+    is_wechat: inWeChat,
+    ip: maskIp(sess?.client_ip),
+  };
+}
+
 async function generateTokensForUser(user) {
   const token = jwt.sign(
     { id: user.id, username: user.username, is_root: user.is_root, role: user.role },
@@ -52,7 +112,8 @@ async function generateTokensForUser(user) {
 
 exports.createSession = async (req, res) => {
   try {
-    const channel = req.body?.channel || 'pc';
+    // 前端按真实环境上报通道：pc 电脑浏览器 / h5 手机浏览器 / wechat-h5 微信内网页
+    const channel = CLIENT_CHANNELS.includes(req.body?.channel) ? req.body.channel : 'pc';
     // 前端可手动指定扫码打开的小程序版本（release/trial/develop），
     // service 内做白名单校验，非法值回退默认规则
     const envVersion = req.body?.env_version;
@@ -206,7 +267,7 @@ exports.miniappEntry = async (req, res) => {
         bind_token: null,
         bind_token_expires_at: null,
       });
-      return success(res, { action: 'login_ok' }, '已确认登录');
+      return success(res, { action: 'login_ok', client: describeClient(sess) }, '已确认登录');
     }
     const bindToken = crypto.randomUUID();
     const bindExp = new Date(now().getTime() + 5 * 60 * 1000);
@@ -220,6 +281,7 @@ exports.miniappEntry = async (req, res) => {
       {
         action: 'need_register_or_bind',
         bindToken,
+        client: describeClient(sess),
       },
       '需要注册或绑定账号'
     );

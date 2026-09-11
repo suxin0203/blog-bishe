@@ -111,7 +111,7 @@
                 <div v-else>
                   <img v-if="qrImage" :src="qrImage" alt="微信小程序码" class="qr-image" />
                   <p class="qr-tip">
-                    请使用微信扫描小程序码，按提示完成登录或注册
+                    {{ isMobileClient ? "长按识别上方小程序码完成登录，或截图后用微信扫一扫" : "请使用微信扫描小程序码，按提示完成登录或注册" }}
                     <n-tooltip trigger="hover">
                       <template #trigger>
                         <span class="qr-help">?</span>
@@ -195,6 +195,19 @@ const forgotForm = reactive({
 });
 
 // ---------- 扫码登录 ----------
+// 识别登录页当前运行环境，让扫码会话记录真实来源端（而不是写死的 pc）。
+// UA 关键字：微信内置浏览器含 MicroMessenger；手机 UA 含 Mobile/Android/iPhone
+const detectClientChannel = () => {
+  const ua = navigator.userAgent || "";
+  const inWeChat = /MicroMessenger/i.test(ua);
+  const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua);
+  if (isMobile && inWeChat) return "wechat-h5";
+  if (isMobile) return "h5";
+  return "pc";
+};
+const clientChannel = detectClientChannel();
+const isMobileClient = clientChannel !== "pc";
+
 const qrImage = ref("");
 const qrSceneId = ref("");
 const qrExpiresAt = ref("");
@@ -291,7 +304,7 @@ const initQrLogin = async () => {
   qrExpiresAt.value = "";
   clearQrTimers();
   try {
-    const res = await createQrLoginSession({ channel: "pc", env_version: qrEnvVersion.value });
+    const res = await createQrLoginSession({ channel: clientChannel, env_version: qrEnvVersion.value });
     if (res.code === 200 && res.data?.sceneId) {
       qrSceneId.value = res.data.sceneId;
       // Android 微信/QQ WebView 对 data:image/* base64 有时不渲染/缓存异常，优先用后端 PNG 地址
