@@ -38,6 +38,7 @@ const pointsRouter = require('./routes/points');
 const dashboardRouter = require('./routes/dashboard');
 const utilsRouter = require('./routes/utils');
 const ActivityRouter = require('./routes/activity');
+const aiRouter = require('./routes/ai');
 
 const app = express();
 app.set('trust proxy', true);
@@ -196,6 +197,8 @@ app.use('/dashboard', dashboardRouter);
 app.use('/utils', utilsRouter);
 // 挂载活动与签到接口
 app.use('/activity', ActivityRouter);
+// 挂载 AI 向导接口（SSE 流式聊天）
+app.use('/ai', aiRouter);
 
 // 404 处理中间件：当前面所有路由都没有匹配到时，主动创建一个 404 错误
 app.use(function (req, res, next) {

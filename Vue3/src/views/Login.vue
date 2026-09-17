@@ -177,6 +177,11 @@ import { RefreshOutline } from "@vicons/ionicons5";
 const message = inject("message");
 const adminStore = AdminStore();
 
+// 表单模板引用：login()/register() 里调用 validate 必需，
+// 缺了这两个声明会导致点击登录/注册按钮直接抛 ReferenceError（按钮无反应）
+const formRef = ref(null);
+const formRefRegister = ref(null);
+
 const activeTab = ref("login");
 
 const loginLoading = ref(false);

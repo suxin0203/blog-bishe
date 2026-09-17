@@ -160,6 +160,21 @@
 
 > 附：轮播图资源丢失问题（部署时整删项目导致 `public/upload/` 文件被清、数据库路径成死链）采用**方案二**处理——部署时把 `Express/public/upload/` 当数据保护、不随代码删除；代码侧不改动。
 
+### 4.12 登录/注册按钮无反应（4.10 改版引入，2026-09-18 修复）
+
+- 根因：4.10 重写 `Login.vue` 时遗漏了 `formRef` / `formRefRegister` 两个模板引用声明，而 `login()/register()` 调用 `formRef.value?.validate(...)`——点击按钮即抛 `ReferenceError`，表现为按钮"死"。构建不报错（运行时错误），此前未被发现。
+- 修复：补上 `const formRef = ref(null)` / `const formRefRegister = ref(null)` 声明。
+- 教训：重写组件时模板引用（ref="xxx"）与脚本声明要成对核对；表单校验路径应有最低限度的手工回归。
+
+### 4.13 AI 向导（新功能，2026-09-18 上线）
+
+- 纯提示词聊天向导（智谱 GLM，免费 flash 模型），SSE 流式输出 + 多轮记忆（内存，10 条/30 分钟 TTL）+ IP 限流（60s/10 次）+ 防幻觉系统提示词，对现有业务零侵入。
+- 后端：`common/aiConfig.js`（配置，Key 走 `ZHIPU_API_KEY` 环境变量）、`services/aiService.js`、`controllers/aiController.js`、`routes/ai.js`（挂载 `/ai`）。
+- 前端：`components/AiGuide/index.vue`（悬浮球+引导气泡+聊天面板，全站可见、/dashboard 隐藏）、`api/ai.js`（fetch 解析 SSE）。
+- 配套：数据库/JWT/微信/AI 密钥全部迁移到 `Express/.env`（gitignore），模板见 `.env.example`；删除 6 个零引用旧控制器与假依赖包（fs/path）。
+- 待办：① nginx 反代 `/ai` 需 `proxy_buffering off`（响应头已带 `X-Accel-Buffering: no`）；② 换数据库密码后删除 config.js 明文回退；③ 二期 Tool Calling / 三期 RAG。
+- 详细设计、踩坑笔记与测试记录见 `docs/AI向导-方案一设计计划.md`、`docs/工作记录-2026-09-18.md`。
+
 ---
 
 ## 五、验证记录
