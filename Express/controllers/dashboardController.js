@@ -54,3 +54,13 @@ exports.getTrafficSource = async (req, res) => {
     return error(res, '操作错误');
   }
 };
+
+exports.getAiStats = async (req, res) => {
+  try {
+    const data = await dashboardService.getAiStats();
+    return success(res, data, 'ok');
+  } catch (e) {
+    console.error(e);
+    return error(res, '操作错误');
+  }
+};

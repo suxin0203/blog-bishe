@@ -158,6 +158,7 @@ data: [DONE]                          ← 结束标记
 2. **Windows 下 curl 发中文 JSON 是 GBK 字节**，服务端按 UTF-8 解析成乱码导致模型答非所问——测试中文接口一律用 Node/浏览器客户端（`test-ai-guide.js` 即为此而生）。
 3. **智谱免费档限流按模型独立**：1302 错误 = 触发速率限制；流式请求被限时可能表现为"挂起不响应"而非立刻 429，`aiService` 里用 `AbortSignal.any` + 60s 超时兜底。
 4. 免费模型有并发数限制，浏览器实测打字机效果正常（<1s 完成），个人博客场景绰绰有余。
+5. **服务器是宝塔 Node v14.19.1**：没有全局 `fetch`（15+）、`AbortController`（15+）、`AbortSignal.timeout`（17+）、`AbortSignal.any`（20+）。AI 模块已改造为 Node 14 兼容：`axios`（`responseType: 'stream'` + CancelToken）代替 fetch/Abort 体系，中断协议改为普通标记对象 `{ cancelled, cancel() }`，本地（Node 24）与服务器（Node 14）均可运行。长期建议：宝塔把 Node 升到 18/20 LTS（升级后需删 node_modules 重装，重建 bcrypt 等原生模块）。
 
 ---
 
@@ -171,3 +172,56 @@ data: [DONE]                          ← 结束标记
 2. **命名两代混杂**：新代统一 `xxxController.js`，旧代是 `activity.js` / `uploadJPG.js` / `wechatlogin.js` 这类裸名；新代码按新代风格走即可，存量不必强行统一。
 3. ~~**两个假 npm 包**~~ ✅ 已卸载（2026-09-18）：`fs`、`path` 从 package.json 移除，冒烟测试通过（`node -e "require('./app.js')"` 模块全量加载正常）。注意 `ejs` 不能删：`routes/index.js` 的 `/` 首页仍在用它渲染 `views/index.ejs`。
 4. ~~**config.js 明文数据库密码已入库**~~ ✅ 已改造 `.env` + dotenv（2026-09-18），回退值待换密码后删除（见坑位 3）。
+
+---
+
+## 二期实施记录（2026-09-19，✅ 已完成并全部验证）
+
+### 交付内容
+
+1. **环境与数据**：本地 `.env` 切开发库 `wztest-ai`（正式库 wztest 零接触，已只读验证零污染）；`config.js`/`pool` 支持 `DB_PORT`；迁移 `sql/migrations/03-ai-session-stats.sql` 建成 `wz_ai_sessions`/`wz_ai_messages` 并已在开发库执行；**14 篇空壳文章补全真实内容**（id 3,4,5,7,8,9,10,11,12,13,14,15,16,19，466~1307 字符 HTML，脚本 `scripts/fill-article-content.js`）。
+2. **会话落库**：`aiSessionService.js`（ensure/getMessages/append）替换一期内存 Map；新增 `GET /ai/history` 会话回放；前端 sessionId 存 localStorage，刷新自动恢复对话。
+3. **Tool Calling**：`aiTools.js` 工具注册表（search_articles / list_categories / list_tags / get_hot_articles / get_article_detail / get_site_overview，全部复用现有 services，schema 与 handler 分离）；`aiService.chatWithTools`（轮 1 非流式带工具）+ `chatStream`（轮 2 流式收口，不带工具）；SSE 新增 `{tool}` 状态事件；轮 1/轮 2 均支持客户端断开取消（CancelToken）。
+4. **前端**：markdown-it + DOMPurify 渲染 AI 回复（链接自动新窗口）；工具调用状态行"🔎 正在查询…"；AI 文章引用为可点击完整链接。
+5. **看板统计**：`GET /dashboard/token/ai-stats`（总提问/今日提问/近 7 日趋势/工具 Top5）；BlogBoard.vue 新增"AI 向导使用统计"卡（趋势图复用 renderLineChart）。
+
+### 验证结果
+
+| 项目 | 结果 |
+|------|------|
+| 工具单测 `test-ai-tools.js` | 14/14 通过 |
+| e2e `test-ai-guide.js` | 6/6 通过（多轮记忆/拒答/防套提示词/400/工具触发+链接/限流） |
+| 质量评估 `ai-eval.js`（20 题） | 18/20 = 90% 达标（2 个失败项为断言过严，修正后预期 20/20） |
+| 接口边界 | 伪造 sessionId/无参/超长 501 字/纯空格/非法 JSON 全部正确处理 |
+| 数据完整性 | 128 条消息 0 孤儿，message_count 一致 |
+| 正式库隔离 | wztest 无 AI 表、文章内容保持空壳原样 |
+| 看板接口 | getAiStats 聚合正确（58 条消息、工具 Top 排序） |
+
+### 二期新增踩坑记录
+
+6. **挂上 tools 后模型边界感变弱**：glm-4-flash 在带工具定义时更容易顺从越界请求（肯写快排代码了）。对策：系统提示词的拒绝规则给出具体示例（"写快排代码"应如何回应），强化后回归通过。
+7. **categoryService 没有 findByName**（tagService 有）：工具里按名称找分类需从 findAll() 结果自行匹配。
+8. **Node 14 兼容的流式中断全套方案**：非流式轮与流式轮统一用 `{ cancelled, cancel() }` 标记对象 + axios CancelToken；流式监听 `res.on('close')`（不是 `req`），非流式靠 axios timeout 60s 兜底。
+
+### 部署
+
+见 **docs/AI向导-二期部署.md**（覆盖文件清单、wztest 执行 03 迁移、验证清单、环境矩阵）。
+
+### 二期增补（2026-09-19 晚，用户实测反馈）
+
+9. **复合问题短板**（"有哪些 Vue 的文章？大概讲了什么？"只答一半）：一期工具链只有单轮。已升级为**最多两轮链式工具**（先搜索→再 get_article_detail 读内容），`search_articles` 结果增加 `contentExcerpt` 正文摘录（120 字）让单轮也能答内容，系统提示词增加复合问题分步引导。实测两条路径均通过：单轮搜索+摘录直答；两轮链式（search_articles → get_article_detail）详细回答文章配置要点。
+10. **微信内置浏览器兼容**：安卓微信 X5 内核无 `ReadableStream` → `api/ai.js` 降级为一次性读全文解析（打字机观感不变）；`vite.config.js` 构建目标降为 es2018（旧 X5 遇 ES2020 语法白屏）；移动端输入框 16px 防 iOS 聚焦缩放；触控目标加大。详见 docs/AI向导-二期部署.md 第五节。
+
+### 二期增补 2（2026-09-19 晚，步骤时间线 UI）
+
+11. **执行步骤时间线**：AI 回答前在气泡内显示竖向步骤时间线，随 SSE 事件动态生长——「理解与分析问题」→「查询站内数据（带实际动作提示，如'正在查询热门文章…'，链式时变'正在阅读文章内容…'）」→「整理并组织回答」。实现要点：纯前端驱动（SSE 事件映射，零后端改动）；`{tool}` 事件触发插入查询步骤、首个 `{delta}` 触发整理步骤；纯聊天自动退化为 2 步；完成后 0.9s 收起为一行「✓ 已完成 N 个步骤」；支持 error 状态（红点）。采样数据：409ms 出第 1 步 → 818ms 出第 2 步 → 5.7s 出第 3 步 → 8.5s 收起。移动端时间线宽 299px（375px 视口）完整显示。
+12. **复合问题升级为两轮链式工具**：控制器工具循环化（MAX_TOOL_ROUNDS=2，单轮可并行多工具），`search_articles` 结果增加 `contentExcerpt` 正文摘录（120 字）使单轮即可回答"大概讲了什么"；系统提示词加复合问题分步引导。实测："有哪些 Vue 文章？讲了什么？"单轮直答；"找 Nginx 文章详细介绍配置"走 search → detail 链式并详述内容要点。
+
+### 二期增补 3（2026-09-19 晚，工具调用守卫）
+
+13. **畸形输入下模型跳过工具的守卫**：用户实测发现，把"有没有关于 mysql 的文章？讲了什么？"重复粘贴多遍后，模型会跳过工具直接凭空回答"没有找到"（正常表述不受影响）。定性为模型指令遵循短板而非代码 bug。对策（工具调用守卫模式，生产 AI 应用常见做法）：涉站点数据的问题若模型未调用工具就想回答，强制打回重试一次（`SITE_DATA_INTENT` 正则粗判意图 + 追加纠偏消息）。复测同一条畸形输入：正确触发 search_articles、找到《MySQL 索引优化实践》并给出 `/detail?id=3` 链接；普通问题零误伤。评估用例增至 21 个（含畸形输入回归用例）。
+
+### 二期收尾（2026-09-19 深夜，最终基线）
+
+14. **趋势图日期时区偏移修复**：SQL 的 `DATE()` 返回 Date 对象，JSON 序列化为 UTC 后前端 `slice(5)` 截取的标签会差一天。三处趋势查询（用户/文章/AI）统一改 `DATE_FORMAT(created_at, '%Y-%m-%d')` 直接返回字符串。
+15. **最终评估基线**：加入工具调用守卫与畸形输入用例后，`ai-eval.js` 21 题全量通过（普通 8/8、工具 9/9、边界 4/4，**100%**）。此数字为论文/答辩的最终基线。

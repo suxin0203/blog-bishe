@@ -6,6 +6,7 @@ require('dotenv').config();
 
 module.exports = {
   host: process.env.DB_HOST || "47.109.90.45",
+  port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER || "wztest",
   password: process.env.DB_PASSWORD || "CDD7KCtYecj6a5FC",
   database: process.env.DB_NAME || "wztest"

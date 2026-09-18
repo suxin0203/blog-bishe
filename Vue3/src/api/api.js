@@ -550,6 +550,15 @@ export function getDashboardTrafficSource() {
   })
 }
 
+// AI 向导使用统计（总提问/今日提问/近7日趋势/工具调用Top）
+export function getDashboardAiStats() {
+  return request({
+    url: '/dashboard/token/ai-stats',
+    method: 'get',
+    timeout: DASHBOARD_TIMEOUT,
+  })
+}
+
 // 积分流水（当前用户：不传 userId；管理员查他人：传 userId）
 export function getPointsLog(params) {
   return request({

@@ -12,5 +12,7 @@ router.get('/token/user-trend', dashboardController.getUserTrend);
 router.get('/token/article-trend', dashboardController.getArticleTrend);
 // 获取流量来源统计
 router.get('/token/traffic-source', dashboardController.getTrafficSource);
+// 获取 AI 向导使用统计
+router.get('/token/ai-stats', dashboardController.getAiStats);
 
 module.exports = router;

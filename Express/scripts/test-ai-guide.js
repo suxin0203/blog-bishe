@@ -1,14 +1,14 @@
 /**
  * AI 向导端到端测试（通过 HTTP 接口，UTF-8 安全，不依赖 curl）
  * 用法：先启动服务（npm start），再 node scripts/test-ai-guide.js
- * 验证：① 首问+多轮记忆 ② 越界问题拒绝 ③ 空问题 400 ④ IP 限流 429
- * 注意：真实调用大模型，输出中 [与博客相关] 的用例会消耗免费额度
+ * 验证：① 首问+多轮记忆 ② 越界问题拒绝 ③ 空问题 400 ④ 工具触发+链接 ⑤ IP 限流 429
+ * 注意：部分用例会真实调用大模型，消耗免费额度
  */
 const BASE = 'http://localhost:8021';
 
-// 把 SSE 响应解析成 { sessionId, text, error }
+// 把 SSE 响应解析成 { sessionId, text, tools, error }
 function parseSSE(raw) {
-  const out = { sessionId: '', text: '', error: '' };
+  const out = { sessionId: '', text: '', tools: [], error: '' };
   for (const line of raw.split('\n')) {
     const p = line.replace(/^data:\s*/, '').trim();
     if (!p || p === '[DONE]') continue;
@@ -16,6 +16,7 @@ function parseSSE(raw) {
       const evt = JSON.parse(p);
       if (evt.sessionId) out.sessionId = evt.sessionId;
       else if (evt.delta) out.text += evt.delta;
+      else if (evt.tool) out.tools.push(evt.tool.name);
       else if (evt.error) out.error = evt.error;
     } catch (_) { /* 忽略 */ }
   }
@@ -56,7 +57,18 @@ async function ask(message, sessionId) {
   const r5 = await ask('');
   console.log(`HTTP ${r5.http} code=${r5.code} message=${r5.message}\n`);
 
-  console.log('—— 用例5：IP 限流（每分钟限 10 次；前 10 次会消耗少量额度，之后应 429）——');
+  console.log('—— 用例5：工具调用（应触发 search_articles 并给出文章链接）——');
+  const r6 = await ask('博客里有哪些关于 Redis 的文章？');
+  if (r6.http !== 200) {
+    console.log(`✗ HTTP ${r6.http} ${r6.message || ''}`);
+  } else {
+    console.log(`触发工具=[${r6.tools.join(',') || '无'}]（期望 search_articles）`);
+    console.log(`回答：${r6.text || '(无) ' + (r6.error || '')}`);
+    console.log(`断言：${r6.tools.includes('search_articles') && r6.text.includes('/detail?id=') ? '✓ 工具触发且含文章链接' : '✗ 未达预期'}`);
+  }
+  console.log('');
+
+  console.log('—— 用例6：IP 限流（每分钟限 10 次；前几次会消耗少量额度，之后应 429）——');
   const results = [];
   for (let i = 0; i < 12; i++) {
     const r = await ask('?'); // 合法最短问句；命中我方限流后不再消耗大模型额度

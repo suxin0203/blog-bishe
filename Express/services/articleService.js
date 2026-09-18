@@ -187,6 +187,8 @@ module.exports = {
   restore,
   remove,
   incrementViewCount,
+  getTopBy,
   getTopLists,
   getArchiveGroups,
+  stripHtml,
 };

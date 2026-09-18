@@ -67,6 +67,35 @@
             </n-grid>
           </n-card>
 
+          <n-card title="AI 向导使用统计" size="small" class="chart-card">
+            <template #header-extra>
+              <n-text depth="2" style="font-size: 12px">最近 7 日提问趋势</n-text>
+            </template>
+            <n-grid :cols="2" :x-gap="16">
+              <n-gi>
+                <n-space vertical :size="18">
+                  <n-statistic label="累计提问" :value="aiStats.totalQuestions" />
+                  <n-statistic label="今日提问" :value="aiStats.todayQuestions" />
+                </n-space>
+              </n-gi>
+              <n-gi>
+                <div ref="aiTrendRef" class="chart" style="height: 200px"></div>
+              </n-gi>
+            </n-grid>
+            <div v-if="aiToolTop.length" class="ai-tool-top">
+              <n-text depth="3" style="font-size: 12px">工具调用 Top 5：</n-text>
+              <n-tag
+                v-for="t in aiToolTop"
+                :key="t.name"
+                size="small"
+                type="success"
+                :bordered="false"
+              >
+                {{ t.name }} × {{ t.count }}
+              </n-tag>
+            </div>
+          </n-card>
+
           <n-grid :cols="2" :x-gap="16" :y-gap="16">
             <n-gi>
               <n-card title="用户增长趋势" size="small" class="chart-card">
@@ -121,6 +150,7 @@ import {
   getDashboardUserTrend,
   getDashboardArticleTrend,
   getDashboardTrafficSource,
+  getDashboardAiStats,
 } from "@/api/api";
 
 const loading = ref(true);
@@ -131,6 +161,12 @@ const stats = ref({
   messageTotal: 0,
 });
 const trafficSource = ref({ internal: undefined, external: undefined });
+
+// AI 向导使用统计
+const aiStats = ref({ totalQuestions: 0, todayQuestions: 0 });
+const aiToolTop = ref([]);
+const aiTrendRef = ref(null);
+let aiChart = null;
 
 const userTrendRef = ref(null);
 const articleTrendRef = ref(null);
@@ -195,12 +231,13 @@ function unwrap(res) {
 async function fetchAll() {
   loading.value = true;
   try {
-    const [statsSettled, rankSettled, userTrendSettled, articleTrendSettled, trafficSettled] = await Promise.allSettled([
+    const [statsSettled, rankSettled, userTrendSettled, articleTrendSettled, trafficSettled, aiSettled] = await Promise.allSettled([
       getDashboardStats(),
       getDashboardArticleRank({ type: "view_count", limit: 10 }),
       getDashboardUserTrend({ days: DAYS }),
       getDashboardArticleTrend({ days: DAYS }),
       getDashboardTrafficSource(),
+      getDashboardAiStats(),
     ]);
 
     let statsRes = statsSettled.status === "fulfilled" ? statsSettled.value : null;
@@ -234,6 +271,15 @@ async function fetchAll() {
       internal: trafficData?.internal ?? 0,
       external: trafficData?.external ?? 0,
     };
+
+    // AI 向导使用统计
+    const aiRes = aiSettled?.status === "fulfilled" ? aiSettled.value : null;
+    const aiData = unwrap(aiRes);
+    aiStats.value = {
+      totalQuestions: aiData?.totalQuestions ?? 0,
+      todayQuestions: aiData?.todayQuestions ?? 0,
+    };
+    aiToolTop.value = aiData?.toolTop || [];
 
     articleRankList.value = (unwrap(rankRes) || []).map((r) => ({
       ...r,
@@ -271,6 +317,13 @@ async function fetchAll() {
         "green"
       );
     }
+
+    const aiTrendList = aiData?.weekTrend || [];
+    const aiDates = aiTrendList.map((d) => (d.date || "").slice(5));
+    const aiCounts = aiTrendList.map((d) => d.count ?? 0);
+    if (aiTrendRef.value) {
+      aiChart = renderLineChart(aiTrendRef.value, "AI 提问", aiDates, aiCounts, "green");
+    }
   } finally {
     loading.value = false;
   }
@@ -283,6 +336,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   userChart?.dispose();
   articleChart?.dispose();
+  aiChart?.dispose();
 });
 </script>
 
@@ -402,6 +456,14 @@ onBeforeUnmount(() => {
 .chart-card {
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ai-tool-top {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .chart {

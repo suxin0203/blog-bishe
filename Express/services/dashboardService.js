@@ -35,7 +35,7 @@ async function getArticleRank({ type = 'view_count', limit = 10 } = {}) {
 /** 用户增长（按日统计最近 N 天） */
 async function getUserTrend(days = 7) {
   const rows = await runQuery(
-    `SELECT DATE(created_at) AS date, COUNT(*) AS count FROM wz_users WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY DATE(created_at) ORDER BY date`,
+    `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS date, COUNT(*) AS count FROM wz_users WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY DATE(created_at) ORDER BY date`,
     [days]
   );
   return rows;
@@ -44,7 +44,7 @@ async function getUserTrend(days = 7) {
 /** 文章发布趋势（按日） */
 async function getArticleTrend(days = 7) {
   const rows = await runQuery(
-    `SELECT DATE(created_at) AS date, COUNT(*) AS count FROM wz_articles WHERE status IN (0, 1) AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY DATE(created_at) ORDER BY date`,
+    `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS date, COUNT(*) AS count FROM wz_articles WHERE status IN (0, 1) AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY DATE(created_at) ORDER BY date`,
     [days]
   );
   return rows;
@@ -62,4 +62,28 @@ async function getTrafficSource() {
   }
 }
 
-module.exports = { getStats, getArticleRank, getUserTrend, getArticleTrend, getTrafficSource };
+/** AI 使用统计：总提问数、今日提问数、近 7 日提问趋势、工具调用 Top（数据来自 wz_ai_messages） */
+async function getAiStats() {
+  const [totalRows, todayRows, trendRows, toolRows] = await Promise.all([
+    runQuery("SELECT COUNT(*) AS total FROM wz_ai_messages WHERE role = 'user'"),
+    runQuery("SELECT COUNT(*) AS total FROM wz_ai_messages WHERE role = 'user' AND DATE(created_at) = CURDATE()"),
+    runQuery(
+      `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS date, COUNT(*) AS count FROM wz_ai_messages
+       WHERE role = 'user' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+       GROUP BY DATE(created_at) ORDER BY date`
+    ),
+    runQuery(
+      `SELECT tool_name AS name, COUNT(*) AS count FROM wz_ai_messages
+       WHERE role = 'tool' AND tool_name IS NOT NULL
+       GROUP BY tool_name ORDER BY count DESC LIMIT 5`
+    ),
+  ]);
+  return {
+    totalQuestions: totalRows[0].total,
+    todayQuestions: todayRows[0].total,
+    weekTrend: trendRows,
+    toolTop: toolRows,
+  };
+}
+
+module.exports = { getStats, getArticleRank, getUserTrend, getArticleTrend, getTrafficSource, getAiStats };

@@ -17,6 +17,9 @@ dist-ssr/
 .env.*
 !.env.example
 
+# ZCode 本地会话数据
+.zcode/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

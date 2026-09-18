@@ -33,6 +33,22 @@ export function streamChat({ message, sessionId, onEvent, onDone }) {
         throw new Error(body.message || `请求失败（HTTP ${res.status}）`);
       }
 
+      // 边缘兼容：部分安卓微信 X5 内核的响应没有 ReadableStream，无法逐块读取。
+      // 降级为一次性读取全文再整体解析——前端打字机缓冲会让观感保持一致
+      if (!res.body || typeof res.body.getReader !== 'function') {
+        const full = await res.text();
+        for (const line of full.split('\n')) {
+          const payload = line.replace(/^data:\s*/, '').trim();
+          if (!payload) continue;
+          if (payload === '[DONE]') { finish(); return; }
+          try {
+            onEvent && onEvent(JSON.parse(payload));
+          } catch (_) { /* 忽略无法解析的行 */ }
+        }
+        finish();
+        return;
+      }
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
@@ -63,4 +79,17 @@ export function streamChat({ message, sessionId, onEvent, onDone }) {
   })();
 
   return { abort: () => controller.abort() };
+}
+
+// 会话回放：按 sessionId 拉取历史消息（刷新页面后恢复对话）
+// 返回 { sessionId, messages: [{role, content}] }；会话不存在时 sessionId 为空串
+export async function fetchHistory(sessionId) {
+  try {
+    const res = await fetch(`${BASE_URL}/ai/history?sessionId=${encodeURIComponent(sessionId)}`);
+    if (!res.ok) return { sessionId: '', messages: [] };
+    const body = await res.json().catch(() => ({}));
+    return body.data || { sessionId: '', messages: [] };
+  } catch (_) {
+    return { sessionId: '', messages: [] };
+  }
 }
