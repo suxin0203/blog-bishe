@@ -44,6 +44,18 @@ const props = defineProps({
 
 const server_url = inject("server_url");
 
+// ---------- 图片地址双向转换（库内约定存 /upload/ 相对路径） ----------
+// 灌入编辑器：相对 → 绝对（否则历史内容的图片在编辑器内裂图，请求会打到前端源）
+// 保存回写：绝对 → 相对（保持库内相对路径约定，换环境/换域名不裂）
+function toAbsolute(html) {
+  if (!html || !server_url) return html;
+  return String(html).replace(/(src|href)(=["']?)\/upload\//g, `$1$2${server_url}/upload/`);
+}
+function toRelative(html) {
+  if (!html || !server_url) return html;
+  return String(html).split(`${server_url}/upload/`).join("/upload/");
+}
+
 // 编辑器实例，必须用 shallowRef，重要！
 const editorRef = shallowRef();
 //屏蔽上传视频
@@ -122,6 +134,35 @@ onBeforeUnmount(() => {
   editor.destroy();
 });
 
+onMounted(() => {
+  setTimeout(() => {
+    // 首次初始化：把外部值灌入编辑器（相对地址补全为绝对，保证编辑器内图片可见）
+    valueHtml.value = toAbsolute(props.modelValue);
+    try {
+      editorRef.value?.setHtml?.(valueHtml.value || "");
+    } catch (_) {}
+    initFinished = true;
+  }, 10);
+});
+
+// 外部 v-model 变更（例如：切换文章点"修改"）时，同步刷新编辑器内容
+watch(
+  () => props.modelValue,
+  (next) => {
+    const nextHtml = toAbsolute(next ?? "");
+    if (nextHtml === valueHtml.value) return;
+    syncingFromOutside.value = true;
+    valueHtml.value = nextHtml;
+    try {
+      editorRef.value?.setHtml?.(nextHtml);
+    } catch (_) {}
+    // 放到微任务末尾，避免触发 onChange 立刻回写
+    Promise.resolve().then(() => {
+      syncingFromOutside.value = false;
+    });
+  }
+);
+
 // 编辑器回调函数
 const handleCreated = (editor) => {
   //   console.log("created", editor);
@@ -131,7 +172,8 @@ const handleChange = (editor) => {
   //   console.log("change:", editor.getHtml());
 
   if (initFinished && !syncingFromOutside.value) {
-    emit("update:modelValue", valueHtml.value);
+    // 保存回库前归一化：编辑器内是绝对地址，入库统一转为相对路径
+    emit("update:modelValue", toRelative(valueHtml.value));
   }
 };
 </script>

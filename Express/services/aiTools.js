@@ -55,7 +55,8 @@ const toolDefinitions = [
         list.map(async (a) => {
           let contentExcerpt = '';
           try {
-            const full = await articleService.getById(a.id);
+            // publicOnly：回收站文章不进入 AI 摘录
+            const full = await articleService.getById(a.id, { publicOnly: true });
             contentExcerpt = clamp(articleService.stripHtml(full && full.content), 120);
           } catch (_) { /* 拿不到正文就只给摘要 */ }
           return {
@@ -145,7 +146,8 @@ const toolDefinitions = [
       if (!id) return { ok: false, error: '缺少文章 id' };
       let a = null;
       try {
-        a = await articleService.getById(id);
+        // AI 向导面向访客：回收站文章同样不可见
+        a = await articleService.getById(id, { publicOnly: true });
       } catch (_) {
         a = null;
       }

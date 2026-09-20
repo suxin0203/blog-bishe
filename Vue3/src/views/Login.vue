@@ -851,11 +851,9 @@ const register = async () => {
   max-width: 100%;
   height: auto;
   aspect-ratio: 1 / 1;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
   display: block;
   margin: 0 auto;
+  /* 二维码本身白底：去掉边框/阴影/圆角，与卡片背景融为一体 */
 }
 .qr-placeholder {
   width: 240px;

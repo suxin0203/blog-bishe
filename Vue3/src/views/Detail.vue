@@ -71,7 +71,7 @@
             <hr />
             <div>
               <div
-                v-html="blogInfo.content"
+                v-html="resolveContentAssets(blogInfo.content)"
                 id="editor-content-view"
                 class="editor-content-view"
                 @click="showImg($event)"
@@ -350,6 +350,15 @@ const pageInfo = reactive({
   keyword: "", //搜索关键字
   category_id: 0, //  分类id
 });
+
+// 正文里 /upload/ 开头的相对地址（图片/附件）补全为当前环境 API 域名
+// （库内约定存相对路径，前端按 VITE_BASE_URL 拼接——否则 dev 下请求 5173 必 404）
+const API_BASE = import.meta.env.VITE_BASE_URL || "";
+function resolveContentAssets(html) {
+  if (!html) return html;
+  if (!API_BASE) return html;
+  return String(html).replace(/(src|href)(=["']?)\/upload\//g, `$1$2${API_BASE}/upload/`);
+}
 
 const getArticleById = async () => {
   const id = router.currentRoute.value.query.id;

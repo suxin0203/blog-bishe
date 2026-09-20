@@ -64,9 +64,10 @@ async function getList({ page = 1, pageSize = 8, keyword = '', category_id, tag_
   return { list, total };
 }
 
-/** 单条详情（含分类名、作者昵称、标签 id 列表） */
+/** 单条详情（含分类名、作者昵称、标签 id 列表）
+ *  publicOnly=true：仅返回已展示/置顶文章（公开端点与 AI 工具用，回收站文章不可见） */
 async function getById(id, options = {}) {
-  const { incrementView = false, source } = options;
+  const { incrementView = false, source, publicOnly = false } = options;
   let sql = `
     SELECT a.*, c.name AS category_name,
            COALESCE(u.nickname, '用户已注销') AS author_name,
@@ -76,6 +77,7 @@ async function getById(id, options = {}) {
     LEFT JOIN wz_users u ON u.id = a.author_id
     WHERE a.id = ?
   `;
+  if (publicOnly) sql += ' AND a.status IN (0, 1)';
   const rows = await runQuery(sql, [id]);
   const article = rows[0] || null;
   if (!article) return null;
@@ -100,15 +102,24 @@ async function create({ title, summary, cover_url, content, category_id, author_
   return articleId;
 }
 
-async function update(id, { title, summary, cover_url, content, category_id, status, tag_ids }) {
-  const updates = ['title = ?', 'summary = ?', 'cover_url = ?', 'content = ?', 'category_id = ?', 'status = ?'];
-  const values = [title, summary ?? null, cover_url ?? null, content, category_id, status ?? 0];
+/** 更新文章：动态字段更新，仅处理传入的字段（undefined 不参与 SET，支持部分更新） */
+async function update(id, fields = {}) {
+  const allowed = ['title', 'summary', 'cover_url', 'content', 'category_id', 'status'];
+  const sets = [];
+  const values = [];
+  for (const key of allowed) {
+    if (fields[key] !== undefined) {
+      sets.push(`${key} = ?`);
+      values.push(fields[key]);
+    }
+  }
+  if (!sets.length) return 0;
   values.push(id);
   const result = await runQuery(
-    `UPDATE wz_articles SET ${updates.join(', ')} WHERE id = ?`,
+    `UPDATE wz_articles SET ${sets.join(', ')} WHERE id = ?`,
     values
   );
-  if (tag_ids !== undefined) await tagService.setArticleTags(id, tag_ids || []);
+  if (fields.tag_ids !== undefined) await tagService.setArticleTags(id, fields.tag_ids || []);
   return result.affectedRows ?? 0;
 }
 
@@ -132,12 +143,14 @@ async function remove(id) {
 
 /** 阅读量 +1；source: 'internal' | 'external' 时同时增加站内/站外计数 */
 async function incrementViewCount(id, source) {
+  // 仅统计已展示/置顶文章：回收站文章不产生阅读量
+  const filter = ' AND status IN (0, 1)';
   if (source === 'internal') {
-    await runQuery('UPDATE wz_articles SET view_count = view_count + 1, view_internal_count = view_internal_count + 1 WHERE id = ?', [id]);
+    await runQuery('UPDATE wz_articles SET view_count = view_count + 1, view_internal_count = view_internal_count + 1 WHERE id = ?' + filter, [id]);
   } else if (source === 'external') {
-    await runQuery('UPDATE wz_articles SET view_count = view_count + 1, view_external_count = view_external_count + 1 WHERE id = ?', [id]);
+    await runQuery('UPDATE wz_articles SET view_count = view_count + 1, view_external_count = view_external_count + 1 WHERE id = ?' + filter, [id]);
   } else {
-    await runQuery('UPDATE wz_articles SET view_count = view_count + 1 WHERE id = ?', [id]);
+    await runQuery('UPDATE wz_articles SET view_count = view_count + 1 WHERE id = ?' + filter, [id]);
   }
   return 1;
 }

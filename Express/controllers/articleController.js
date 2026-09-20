@@ -68,7 +68,8 @@ exports.getArticleById = async (req, res) => {
     const id = req.params.id;
     const incrementView = req.query.incrementView === '1' || req.query.incrementView === 'true';
     const source = req.query.source === 'internal' ? 'internal' : req.query.source === 'external' ? 'external' : undefined;
-    const article = await articleService.getById(id, { incrementView, source });
+    // 公开端点：仅返回已展示/置顶文章，回收站内容不可被 id 遍历访问
+    const article = await articleService.getById(id, { incrementView, source, publicOnly: true });
     if (!article) {
       try {
         const resp = await axios.get('https://api.uomg.com/api/rand.qinghua?format=json');

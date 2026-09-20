@@ -44,7 +44,7 @@
             :class="{ 'goods-out': g.stock != null && g.stock <= 0 }"
           >
             <div class="goods-cover">
-              <img v-if="g.image_url" :src="g.image_url" :alt="g.name" />
+              <img v-if="g.image_url" :src="assetUrl(g.image_url)" :alt="g.name" />
               <div v-else class="goods-no-img">
                 <span>{{ g.type === 'title' ? '称号' : '实物' }}</span>
               </div>
@@ -135,6 +135,13 @@ import {
 
 const message = inject("message");
 const adminStore = AdminStore();
+
+// 商品图为 /upload/ 相对路径时补全当前环境 API 域名（与库内"相对路径"约定配套）
+const API_BASE = import.meta.env.VITE_BASE_URL || "";
+function assetUrl(p) {
+  if (!p) return p;
+  return p.startsWith("/upload/") ? API_BASE + p : p;
+}
 
 const loading = ref(false);
 const goodsList = ref([]);

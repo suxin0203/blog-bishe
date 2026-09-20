@@ -18,6 +18,10 @@ export default defineConfig({
     // 兼容微信内置浏览器旧 X5 内核（Chromium < 80 不支持可选链等 ES2020 语法）
     target: "es2018",
   },
+  optimizeDeps: {
+    // 强制预构建 dompurify：否则 dev 模式会解析到它的 TS 源码 src/purify.ts（报 ./tags.js 不存在）
+    include: ["dompurify"],
+  },
   server: {
     host: "0.0.0.0", //内网访问
     // 开发时前端直连 VITE_BASE_URL 指向的后端地址，无需代理
