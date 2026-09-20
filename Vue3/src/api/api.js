@@ -559,6 +559,32 @@ export function getDashboardAiStats() {
   })
 }
 
+// AI 会话管理（仅超管）
+export function getAiSessions(params) {
+  return request({
+    url: '/ai/token/sessions',
+    method: 'get',
+    params: params || {},
+    timeout: DASHBOARD_TIMEOUT,
+  })
+}
+
+export function getAiSessionMessages(id) {
+  return request({
+    url: `/ai/token/sessions/${id}/messages`,
+    method: 'get',
+    timeout: DASHBOARD_TIMEOUT,
+  })
+}
+
+export function deleteAiSession(id) {
+  return request({
+    url: `/ai/token/sessions/${id}`,
+    method: 'delete',
+    timeout: DASHBOARD_TIMEOUT,
+  })
+}
+
 // 积分流水（当前用户：不传 userId；管理员查他人：传 userId）
 export function getPointsLog(params) {
   return request({

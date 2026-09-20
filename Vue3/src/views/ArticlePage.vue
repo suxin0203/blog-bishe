@@ -97,14 +97,11 @@
             </ul>
 
           <div class="articles-pagination">
+            <!-- 页码导航（每页条数由顶部工具栏选择器负责，此处不再重复提供） -->
             <n-pagination
               v-model:page="pageInfo.page"
               v-model:page-count="pageInfo.totalPages"
-              :page-sizes="[5, 10, 20, 50]"
-              show-size-picker
-              show-quick-jumper
               @update:page="getArtiles()"
-              @update:page-size="changePageSize"
             />
           </div>
         </div>
@@ -115,6 +112,9 @@
             <n-card title="当前筛选" size="small" class="sidebar-card sidebar-summary">
               <div class="filter-summary">
                 <span>{{ currentFilterText }}</span>
+                <n-button v-if="hasActiveFilters" quaternary size="tiny" type="primary" @click="clearFilters">
+                  ✕ 清除筛选
+                </n-button>
               </div>
             </n-card>
             <n-card title="分类" size="small" class="sidebar-card">
@@ -184,8 +184,12 @@
   </div>
 </template>
 
+<script>
+// 组件名用于 App.vue 中 keep-alive include：从详情返回列表时保留列表状态与滚动位置
+export default { name: "ArticlePage" };
+</script>
 <script setup>
-import { reactive, ref, onMounted, computed } from "vue";
+import { reactive, ref, onMounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { router } from "@/common/router.js";
 import MyFooterVue from "@/components/MyFooter.vue";
@@ -204,6 +208,68 @@ const blogListInfo = ref([]);
 const show = ref(true);
 const promoCard = ref(null);
 const friendUrl = ref([]);
+
+// ---- 列表状态与 URL 同步：page/pageSize 写入 query，刷新、分享、返回均可恢复 ----
+const PAGE_SIZES = [5, 10, 20, 50];
+
+// 把 URL query 中的分页/筛选状态写入 pageInfo
+function syncFromQuery() {
+  const q = route.query;
+  const p = Number(q.page);
+  pageInfo.page = Number.isFinite(p) && p >= 1 ? p : 1;
+  const ps = Number(q.pageSize);
+  pageInfo.pageSize = PAGE_SIZES.includes(ps) ? ps : 10;
+  if (q.tag_id != null && q.tag_id !== "") {
+    const n = Number(q.tag_id);
+    if (!Number.isNaN(n)) pageInfo.tag_id = n;
+  }
+  if (q.year != null && q.year !== "") pageInfo.year = Number(q.year) || null;
+  if (q.month != null && q.month !== "") pageInfo.month = Number(q.month) || null;
+  if (q.category_id != null && q.category_id !== "") {
+    const n = Number(q.category_id);
+    if (!Number.isNaN(n)) pageInfo.category_id = n;
+  }
+}
+
+// 分页/筛选状态写回 URL（replace 不产生历史记录，避免"翻一页要按多次返回"）。
+// tag_id/year/month 一并同步，空值删除——防止陈旧参数残留在 URL 里把筛选"回灌"
+function syncToQuery() {
+  const query = { ...route.query, page: String(pageInfo.page), pageSize: String(pageInfo.pageSize) };
+  const setOrDel = (key, val) => {
+    if (val != null && val !== "" && !(key === "category_id" && Number(val) === 0)) query[key] = String(val);
+    else delete query[key];
+  };
+  setOrDel("tag_id", pageInfo.tag_id);
+  setOrDel("year", pageInfo.year);
+  setOrDel("month", pageInfo.month);
+  setOrDel("category_id", pageInfo.category_id !== 0 ? pageInfo.category_id : null);
+  router.replace({ query }).catch(() => {});
+}
+
+// 浏览器前进/后退改变列表 query 时重新同步（keep-alive 下组件不会重新挂载）
+watch(
+  () => route.query,
+  () => {
+    if (route.name !== "articles") return;
+    const q = route.query;
+    const targetPage = Math.max(1, Number(q.page) || 1);
+    const targetPageSize = PAGE_SIZES.includes(Number(q.pageSize)) ? Number(q.pageSize) : 10;
+    const targetTag = q.tag_id != null && q.tag_id !== "" ? Number(q.tag_id) : null;
+    const targetYear = q.year != null && q.year !== "" ? Number(q.year) || null : null;
+    const targetMonth = q.month != null && q.month !== "" ? Number(q.month) || null : null;
+    const targetCategory = q.category_id != null && q.category_id !== "" ? Number(q.category_id) : 0;
+    const changed =
+      targetPage !== pageInfo.page ||
+      targetPageSize !== pageInfo.pageSize ||
+      targetTag !== pageInfo.tag_id ||
+      targetYear !== pageInfo.year ||
+      targetMonth !== pageInfo.month ||
+      targetCategory !== pageInfo.category_id;
+    if (!changed) return;
+    syncFromQuery();
+    getArtiles();
+  }
+);
 
 const pageInfo = reactive({
   page: 1,
@@ -248,6 +314,26 @@ const currentFilterText = computed(() => {
   return parts.length ? parts.join(' · ') : '全部文章';
 });
 
+// 是否存在激活的筛选（显示"清除筛选"入口）
+const hasActiveFilters = computed(
+  () =>
+    pageInfo.year != null ||
+    pageInfo.month != null ||
+    (pageInfo.category_id && pageInfo.category_id !== 0) ||
+    !!pageInfo.tag_id ||
+    !!pageInfo.keyword
+);
+
+// 一键清除全部筛选：重置第 1 页并同步 URL（归档/标签等陈旧参数随之清除）
+function clearFilters() {
+  pageInfo.year = null;
+  pageInfo.month = null;
+  pageInfo.tag_id = null;
+  pageInfo.category_id = 0;
+  pageInfo.keyword = '';
+  getArtiles(1);
+}
+
 function stripSummary(text) {
   if (!text) return '';
   const s = String(text).replace(/<[^>]+>/g, '').trim();
@@ -257,13 +343,7 @@ function stripSummary(text) {
 onMounted(async () => {
   await getCategories();
   await getTags();
-  const tagId = route.query.tag_id;
-  if (tagId != null && tagId !== '') {
-    const n = Number(tagId);
-    if (!Number.isNaN(n)) pageInfo.tag_id = n;
-  }
-  if (route.query.year != null && route.query.year !== '') pageInfo.year = Number(route.query.year) || null;
-  if (route.query.month != null && route.query.month !== '') pageInfo.month = Number(route.query.month) || null;
+  syncFromQuery();
   getArtiles();
   getFriendslink();
   loadPromoCard();
@@ -325,7 +405,8 @@ const searchTag = (tag_id) => {
 };
 
 const toDetail = (blog) => {
-  router.push({ path: '/detail', query: { id: blog.id } });
+  // 携带来源分页信息：详情页返回按钮据此回到对应分页
+  router.push({ path: '/detail', query: { id: blog.id, page: pageInfo.page, pageSize: pageInfo.pageSize } });
 };
 
 const searchKeyword = (keyword) => {
@@ -353,9 +434,20 @@ const getArtiles = async (page) => {
   try {
     const res = await getArticleList(params);
     const data = res.data || {};
-    blogListInfo.value = Array.isArray(data.list) ? data.list : [];
+    const list = Array.isArray(data.list) ? data.list : [];
+    // 边界：URL 页码超出总页数（如手改链接/筛选后残留）时自动回退到最后一页
+    if (list.length === 0 && pageInfo.page > 1) {
+      const tp = data.pagination?.totalPages ?? 1;
+      if (pageInfo.page > tp) {
+        pageInfo.page = Math.max(1, tp);
+        return getArtiles();
+      }
+    }
+    blogListInfo.value = list;
     pageInfo.totalPages = data.pagination?.totalPages ?? 1;
     pageInfo.count = data.pagination?.total ?? 0;
+    // 状态落 URL：刷新/分享/返回均可恢复（replace 不产生历史记录）
+    syncToQuery();
   } finally {
     show.value = false;
   }
@@ -568,6 +660,10 @@ const getArtiles = async (page) => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 .sidebar-summary .filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 13px;
   color: var(--n-text-color-2);
 }

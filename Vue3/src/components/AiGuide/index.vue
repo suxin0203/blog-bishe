@@ -82,14 +82,28 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useRoute } from 'vue-router';
 import markdownit from 'markdown-it';
 import DOMPurify from 'dompurify';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css';
 import { streamChat, fetchHistory } from '@/api/ai';
 
 const route = useRoute();
 // 后台管理页不显示向导（面向访客的前台功能）
 const visible = computed(() => !route.path.startsWith('/dashboard'));
 
-// ---------- Markdown 渲染：markdown-it 解析 + DOMPurify 消毒，链接统一新窗口 ----------
-const md = markdownit({ breaks: true, linkify: true });
+// ---------- Markdown 渲染：markdown-it 解析 + Prism 代码高亮 + DOMPurify 消毒，链接统一新窗口 ----------
+const md = markdownit({
+  breaks: true,
+  linkify: true,
+  // Prism 高亮：命中已加载的语言则返回带 token 的 HTML，未命中返回空串由 markdown-it 自行转义
+  highlight(code, lang) {
+    if (lang && Prism.languages[lang]) {
+      try {
+        return Prism.highlight(code, Prism.languages[lang], lang);
+      } catch (_) { /* 高亮失败降级为转义文本 */ }
+    }
+    return '';
+  },
+});
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   if (node.tagName === 'A') {
     node.setAttribute('target', '_blank');
@@ -519,14 +533,15 @@ onBeforeUnmount(() => {
   font-family: Consolas, Monaco, monospace;
 }
 .md-body pre {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  /* prism-tomorrow 暗色主题底色，token 颜色由主题 CSS 提供 */
+  background: #232733;
+  border: 1px solid #1a1f2b;
   border-radius: 8px;
   padding: 10px;
   overflow-x: auto;
   margin: 8px 0;
 }
-.md-body pre code { background: transparent; color: #334155; padding: 0; font-size: 12px; }
+.md-body pre code { background: transparent; color: #e2e8f0; padding: 0; font-size: 12px; }
 .md-body blockquote {
   margin: 8px 0;
   padding: 4px 10px;

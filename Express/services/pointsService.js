@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 const { withTransaction } = require('../common/utils');
 const userService = require('./userService');
 
@@ -112,8 +113,8 @@ async function getOrderList({ userId, status, keyword, page = 1, pageSize = 10 }
   ]);
   list.forEach((o) => {
     o.redeemer_username = o.redeemer_username ?? o.username ?? '';
-    o.created_at = o.created_at?.toLocaleString?.() ?? o.created_at;
-    o.updated_at = o.updated_at?.toLocaleString?.() ?? o.updated_at;
+    o.created_at = formatDateTime(o.created_at);
+    o.updated_at = formatDateTime(o.updated_at);
   });
   return { list, total: countRow[0].total };
 }
@@ -272,7 +273,7 @@ async function getPointsLogList(userId, { page = 1, pageSize = 20 } = {}) {
     [userId, offset, Number(pageSize)]
   );
   list.forEach((r) => {
-    r.created_at = r.created_at?.toLocaleString?.() ?? r.created_at;
+    r.created_at = formatDateTime(r.created_at);
     const rawReason = r.reason ? String(r.reason).trim() : '';
     const adminAdjustMatch = rawReason.match(/^admin_adjust(?:\s*[:：|-]\s*|\s+)?(.*)$/);
     const articleLikedMatch = rawReason.match(/^article_liked:\d+:(.+)$/);

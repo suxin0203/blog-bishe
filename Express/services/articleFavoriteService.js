@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 
 async function toggle(articleId, userId) {
   const rows = await runQuery('SELECT id FROM wz_article_favorites WHERE article_id = ? AND user_id = ?', [
@@ -54,8 +55,8 @@ async function getUserFavorites(userId, { page = 1, pageSize = 10, keyword } = {
     [...listParams, offset, Number(pageSize)]
   );
   rows.forEach((r) => {
-    r.created_at = r.created_at?.toLocaleString?.() ?? r.created_at;
-    r.favorited_at = r.favorited_at?.toLocaleString?.() ?? r.favorited_at;
+    r.created_at = formatDateTime(r.created_at);
+    r.favorited_at = formatDateTime(r.favorited_at);
   });
   return { list: rows, total };
 }

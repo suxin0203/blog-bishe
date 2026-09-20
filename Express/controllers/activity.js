@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 
 
 // 活动列表查询（供后台与公开接口共用），支持模糊搜索和分页
@@ -46,7 +47,7 @@ async function queryActivitys({ name, token, content, remarks, page = 1, limit =
 
   // 格式化创建时间
   activity.forEach(message => {
-    message.created_at = message.created_at.toLocaleString();
+    message.created_at = formatDateTime(message.created_at);
   });
 
   return {
@@ -178,7 +179,7 @@ exports.createActivitySignSelect = async (req, res, next) => {
 
     // 格式化创建时间并处理token
     activity.forEach(message => {
-      message.created_at = message.created_at.toLocaleString();
+      message.created_at = formatDateTime(message.created_at);
       if (message.token) {
         message.token = message.token.replace(/.{3}$/, "***"); // 将token的最后三位替换为***
       }

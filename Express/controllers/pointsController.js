@@ -1,4 +1,5 @@
 const pointsService = require('../services/pointsService');
+const { formatDateTime } = require('../common/utils');
 const { success, fail, error } = require('../common/response');
 
 // ---------- 商品 ----------
@@ -116,8 +117,8 @@ exports.getOrderById = async (req, res) => {
     if (!isAdminOrEditor && Number(order.user_id) !== Number(req.user.id)) {
       return fail(res, '无权查看该订单', 403);
     }
-    order.created_at = order.created_at?.toLocaleString?.() ?? order.created_at;
-    order.updated_at = order.updated_at?.toLocaleString?.() ?? order.updated_at;
+    order.created_at = formatDateTime(order.created_at);
+    order.updated_at = formatDateTime(order.updated_at);
     return success(res, order, 'ok');
   } catch (e) {
     console.error(e);

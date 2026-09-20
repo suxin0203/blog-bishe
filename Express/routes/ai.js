@@ -7,4 +7,9 @@ router.post('/chat/stream', aiController.chatStream);
 // 会话回放：按 sessionId 拉历史消息（前端刷新恢复对话）
 router.get('/history', aiController.history);
 
+// 管理端（仅超管）：AI 会话管理
+router.get('/token/sessions', aiController.listSessions);
+router.get('/token/sessions/:id/messages', aiController.getSessionMessages);
+router.delete('/token/sessions/:id', aiController.removeSession);
+
 module.exports = router;

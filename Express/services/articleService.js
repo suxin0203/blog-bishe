@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 const tagService = require('./tagService');
 
 const stripHtml = (html) => (html || '').replace(/<[^>]+>/g, '');
@@ -47,7 +48,7 @@ async function getList({ page = 1, pageSize = 8, keyword = '', category_id, tag_
     LEFT JOIN wz_categories c ON c.id = a.category_id
     LEFT JOIN wz_users u ON u.id = a.author_id
     WHERE ${where}
-    ORDER BY CASE WHEN a.status = 1 THEN 0 ELSE 1 END, a.id DESC
+    ORDER BY CASE WHEN a.status = 1 THEN 0 ELSE 1 END, a.created_at DESC, a.id DESC
     LIMIT ?, ?
   `;
   const [countRow, list] = await Promise.all([
@@ -56,8 +57,8 @@ async function getList({ page = 1, pageSize = 8, keyword = '', category_id, tag_
   ]);
   const total = countRow[0].total;
   list.forEach((a) => {
-    a.created_at = a.created_at?.toLocaleString?.() ?? a.created_at;
-    a.updated_at = a.updated_at?.toLocaleString?.() ?? a.updated_at;
+    a.created_at = formatDateTime(a.created_at);
+    a.updated_at = formatDateTime(a.updated_at);
     if (a.summary == null && a.content) a.summary = stripHtml(a.content).slice(0, 200);
   });
   return { list, total };
@@ -83,8 +84,8 @@ async function getById(id, options = {}) {
     article.view_count = (article.view_count || 0) + 1;
   }
   article.tag_ids = await tagService.getTagIdsByArticleId(id);
-  article.created_at = article.created_at?.toLocaleString?.() ?? article.created_at;
-  article.updated_at = article.updated_at?.toLocaleString?.() ?? article.updated_at;
+  article.created_at = formatDateTime(article.created_at);
+  article.updated_at = formatDateTime(article.updated_at);
   return article;
 }
 

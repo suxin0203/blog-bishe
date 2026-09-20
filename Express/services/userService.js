@@ -99,9 +99,46 @@ async function updateLastLogin(id) {
   await runQuery('UPDATE wz_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
 }
 
+// ---------- 用户彻底删除 · 内容换绑（注销策略，见 sql/migrations/04-user-deletion-rebind.sql） ----------
+const PLACEHOLDER_USERNAME = 'deleted-user';
+
+// 占位账号「已注销用户」的 id（由 04 迁移创建，status=0 停用不可登录）
+async function getPlaceholderUserId() {
+  const rows = await runQuery('SELECT id FROM wz_users WHERE username = ?', [PLACEHOLDER_USERNAME]);
+  if (!rows.length) {
+    throw new Error('占位账号 deleted-user 不存在，请先执行 sql/migrations/04-user-deletion-rebind.sql');
+  }
+  return rows[0].id;
+}
+
+// 把用户名下的内容与互动/交易记录全部换绑到占位账号
+async function rebindContentToPlaceholder(userId) {
+  const placeholderId = await getPlaceholderUserId();
+  // 先清理占位账号在同名文章下的重复点赞/收藏，避免换绑时撞唯一键
+  await runQuery(
+    `DELETE l FROM wz_article_likes l
+     JOIN wz_article_likes d ON d.article_id = l.article_id AND d.user_id = ?
+     WHERE l.user_id = ?`,
+    [placeholderId, userId],
+  );
+  await runQuery(
+    `DELETE f FROM wz_article_favorites f
+     JOIN wz_article_favorites d ON d.article_id = f.article_id AND d.user_id = ?
+     WHERE f.user_id = ?`,
+    [placeholderId, userId],
+  );
+  await runQuery('UPDATE wz_articles SET author_id = ? WHERE author_id = ?', [placeholderId, userId]);
+  await runQuery('UPDATE wz_article_likes SET user_id = ? WHERE user_id = ?', [placeholderId, userId]);
+  await runQuery('UPDATE wz_article_favorites SET user_id = ? WHERE user_id = ?', [placeholderId, userId]);
+  await runQuery('UPDATE wz_points_orders SET user_id = ? WHERE user_id = ?', [placeholderId, userId]);
+  await runQuery('UPDATE wz_user_points_log SET user_id = ? WHERE user_id = ?', [placeholderId, userId]);
+}
+
 async function remove(id) {
-  await runQuery('UPDATE wz_articles SET author_id = NULL WHERE author_id = ?', [id]);
+  // 彻底删除：内容换绑到占位账号后删除用户行（文章外键已收紧为 RESTRICT）
+  await rebindContentToPlaceholder(id);
   await runQuery('UPDATE wz_comments SET user_id = NULL WHERE user_id = ?', [id]);
+  await runQuery('UPDATE wz_messages SET user_id = NULL WHERE user_id = ?', [id]);
   const result = await runQuery('DELETE FROM wz_users WHERE id = ?', [id]);
   return result.affectedRows ?? 0;
 }
@@ -125,5 +162,6 @@ module.exports = {
   update,
   updatePassword,
   updateLastLogin,
+  rebindContentToPlaceholder,
   remove,
 };

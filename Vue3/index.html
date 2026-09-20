@@ -4,7 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/fa.svg" />
     <meta name="keywords" content="Suxin,suxin,sx,苏辛,苏辛网络,Suxin's" />
-    <meta name="description" content="一个免费的资源分享网站，以及技术分享和活动分享。" />
+    <meta name="description" content="文栈博客：技术教程、生活随笔、读书笔记与积分商城，支持评论、点赞、收藏互动。基于 Vue3 + Express 的个人博客。" />
+    <!-- 微信/QQ 等客户端分享卡片抓取：Open Graph + itemprop。
+         注意：SPA + hash 路由下所有页面共享这一份默认卡片；每篇文章独立卡片需服务端按 URL 出 meta（三期备选） -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="文栈博客" />
+    <meta property="og:title" content="文栈博客 | 技术 · 生活 · 分享" />
+    <meta property="og:description" content="技术教程、生活随笔、读书笔记与积分商城，欢迎来逛。" />
+    <meta property="og:image" content="https://wzblog.suxin23.cn/share-cover.png" />
+    <meta property="og:url" content="https://wzblog.suxin23.cn/" />
+    <meta itemprop="name" content="文栈博客" />
+    <meta itemprop="description" content="技术教程、生活随笔、读书笔记与积分商城，欢迎来逛。" />
+    <meta itemprop="image" content="https://wzblog.suxin23.cn/share-cover.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Suxin's blog</title>
     <style>
@@ -20,6 +31,13 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- 微信分享缩略图兜底：微信抓取页面第一张可见图片作卡片图（SVG 不被识别，需 ≥300px）。
+         opacity=0 用户不可见，但仍在 DOM 中可被抓取；替换 share-cover.png 即可换卡片图 -->
+    <img
+      src="/share-cover.png"
+      alt=""
+      style="position: absolute; left: 0; top: 0; width: 300px; height: 300px; opacity: 0.01; pointer-events: none; z-index: -1"
+    />
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 const qrLoginSessionService = require('../services/qrLoginSessionService');
 const wechatMiniService = require('../services/wechatMiniService');
 const userService = require('../services/userService');
@@ -22,9 +23,9 @@ function isExpired(expiresAt) {
 function pickSafeUser(u) {
   if (!u) return null;
   const { password, ...rest } = u;
-  if (rest.created_at?.toLocaleString) rest.created_at = rest.created_at.toLocaleString();
-  if (rest.updated_at?.toLocaleString) rest.updated_at = rest.updated_at.toLocaleString();
-  if (rest.last_login_at?.toLocaleString) rest.last_login_at = rest.last_login_at.toLocaleString();
+  rest.created_at = formatDateTime(rest.created_at);
+  rest.updated_at = formatDateTime(rest.updated_at);
+  rest.last_login_at = formatDateTime(rest.last_login_at);
   return rest;
 }
 

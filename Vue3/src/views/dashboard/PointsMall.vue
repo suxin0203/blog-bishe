@@ -1,6 +1,16 @@
 <template>
   <div class="dashboard-page points-mall-wrap">
-  <n-card title="积分商城" class="admin-page-card points-mall points-mall-card-wrap">
+  <!-- 页面大标题：与数据看板/AI 会话管理一致 -->
+  <header class="board-header">
+    <div class="board-header-icon">
+      <n-icon size="26" :component="CartOutline" />
+    </div>
+    <div class="board-header-text">
+      <h1 class="board-title">积分商城</h1>
+      <p class="board-desc">商品上架与订单兑换管理</p>
+    </div>
+  </header>
+  <n-card class="admin-page-card points-mall points-mall-card-wrap">
     <n-tabs type="line" animated size="large" class="points-mall-tabs">
       <n-tab-pane name="goods" tab="商品管理">
         <div class="tab-pane-inner">
@@ -142,6 +152,7 @@
 <script setup>
 import { ref, reactive, onMounted, h, inject } from "vue";
 import { NTag, NButton } from "naive-ui";
+import { CartOutline } from "@vicons/ionicons5";
 import { AdminStore } from "@/stores/AdminStore";
 import {
   getPointsGoodsList,
@@ -508,6 +519,40 @@ onMounted(() => {
   margin-top: 12px;
   border-top: 1px solid var(--border, #e8e8ec);
   flex-shrink: 0;
+}
+
+/* 页面大标题：与数据看板/AI 会话管理一致 */
+.board-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(24, 160, 88, 0.12);
+}
+.board-header-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #18a058 0%, #36ad6a 100%);
+  color: #fff;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.board-title {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.board-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
 }
 .goods-form-row {
   display: flex;

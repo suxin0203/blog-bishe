@@ -18,6 +18,9 @@
       <div class="main-body">
         <div class="main-body-l">
           <n-card id="main-page">
+            <div class="detail-back" style="margin-bottom: 8px">
+              <n-button quaternary size="small" @click="goback">← 返回列表</n-button>
+            </div>
             <h1>{{ blogInfo.title }}</h1>
             <n-space justify="space-between" align="center" v-if="blogInfo.id">
               <n-space>
@@ -577,7 +580,23 @@ const showImg = (e) => {
 };
 
 const goback = () => {
-  router.push("/");
+  const q = router.currentRoute.value.query;
+  // 自文章列表进入（URL 携带来源分页）：返回到对应分页；
+  // push 语义 = 不恢复滚动位置，从头浏览列表
+  if (q.page != null || q.pageSize != null) {
+    const query = {};
+    if (q.page != null) query.page = String(q.page);
+    if (q.pageSize != null) query.pageSize = String(q.pageSize);
+    router.push({ path: "/articles", query });
+    return;
+  }
+  // 无来源分页信息（从首页/归档等进入）：能回退就原生回退（恢复来源页滚动），
+  // 直接打开详情（无历史）时兜底到文章列表第 1 页
+  if (window.history.state && window.history.state.back != null) {
+    router.back();
+  } else {
+    router.push({ path: "/articles" });
+  }
 };
 
 const gohome = () => {

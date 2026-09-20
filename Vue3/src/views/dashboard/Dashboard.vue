@@ -176,6 +176,7 @@ const dashboardDefaultAvatar = computed(() => {
 
 const routeNameToMenuKey = {
   board: "go-board",
+  aisessions: "go-aisessions",
   user: "go-user",
   category: "go-category",
   tag: "go-tag",
@@ -290,6 +291,7 @@ const allMenuOptions = [
     icon: renderIcon(StatsChartOutline),
     children: [
       { label: () => h(RouterLink, { to: { name: "board" } }, { default: () => "数据看板" }), key: "go-board", icon: renderIcon(StatsChartOutline) },
+      { label: () => h(RouterLink, { to: { name: "aisessions" } }, { default: () => "AI 会话管理" }), key: "go-aisessions", icon: renderIcon(ChatbubbleOutline) },
       { label: () => h(RouterLink, { to: { name: "pointsmall" } }, { default: () => "积分商城" }), key: "go-pointsmall", icon: renderIcon(CartOutline) },
     ],
   },

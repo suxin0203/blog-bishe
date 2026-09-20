@@ -105,6 +105,12 @@ let routes = [
         component: () => import("@/views/dashboard/BlogBoard.vue"),
       },
       {
+        path: "/dashboard/aisessions",
+        name: "aisessions",
+        meta: { is_root: true },
+        component: () => import("@/views/dashboard/AiSessions.vue"),
+      },
+      {
         path: "/dashboard/setmessage",
         name: "setmessage",
         meta: { is_root: true },
@@ -148,6 +154,12 @@ let routes = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
+  // 滚动行为：浏览器原生前进/后退（含文章列表 ↔ 详情）恢复当时的滚动位置；
+  // 其余导航（含详情页自定义返回按钮的 push）落到页面顶部
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition;
+    return { top: 0 };
+  },
 });
 
 router.beforeEach((to, from, next) => {

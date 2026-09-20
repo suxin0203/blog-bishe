@@ -1,8 +1,9 @@
 const tagService = require('../services/tagService');
+const { formatDateTime } = require('../common/utils');
 const { success, fail, error } = require('../common/response');
 
 function formatItem(t) {
-  t.created_at = t.created_at?.toLocaleString?.() ?? t.created_at;
+  t.created_at = formatDateTime(t.created_at);
   return t;
 }
 

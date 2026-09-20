@@ -5,6 +5,7 @@ const userService = require('../services/userService');
 const pointsService = require('../services/pointsService');
 const { success, fail, error } = require('../common/response');
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 
 const ADMIN_POINT_REASON_PREFIX = 'admin_adjust:';
 
@@ -38,9 +39,9 @@ function sanitizeUser(u) {
 
 function formatUser(u) {
   if (!u) return null;
-  u.created_at = u.created_at?.toLocaleString?.() ?? u.created_at;
-  u.updated_at = u.updated_at?.toLocaleString?.() ?? u.updated_at;
-  u.last_login_at = u.last_login_at?.toLocaleString?.() ?? u.last_login_at;
+  u.created_at = formatDateTime(u.created_at);
+  u.updated_at = formatDateTime(u.updated_at);
+  u.last_login_at = formatDateTime(u.last_login_at);
   return sanitizeUser(u);
 }
 
@@ -201,9 +202,11 @@ exports.deleteUser = async (req, res) => {
     const targetUser = await userService.findById(id);
     if (!targetUser) return fail(res, '用户不存在');
     if (hard) {
+      // 彻底删除：先把内容与互动/交易记录换绑到「已注销用户」占位账号，再删用户行
+      await userService.rebindContentToPlaceholder(id);
       const n = await userService.remove(id);
       if (!n) return fail(res, '用户不存在');
-      return success(res, { id }, '彻底删除成功');
+      return success(res, { id }, '彻底删除成功（内容已换绑至「已注销用户」）');
     }
     const n = await userService.update(id, { status: 0, refresh_token: null, refresh_token_expires_at: null });
     if (!n) return fail(res, '停用失败或无变更');
@@ -371,6 +374,8 @@ exports.updatePassword = async (req, res) => {
     if (!match) return fail(res, '原密码错误');
     const hashed = await bcrypt.hash(newPassword, saltRounds);
     await userService.updatePassword(id, hashed);
+    // 安全：改密后作废全部 refreshToken，所有已登录设备强制重新登录
+    await userService.update(id, { refresh_token: null, refresh_token_expires_at: null });
     return success(res, null, '更新成功');
   } catch (e) {
     console.error(e);
@@ -458,6 +463,8 @@ exports.forgotReset = async (req, res) => {
     if (!user) return fail(res, '用户不存在', 400);
     const hashed = await bcrypt.hash(newPassword, saltRounds);
     await userService.updatePassword(user.id, hashed);
+    // 安全：重置密码后作废全部 refreshToken（该账号所有已登录设备强制重新登录）
+    await userService.update(user.id, { refresh_token: null, refresh_token_expires_at: null });
     return success(res, null, '密码已重置，请使用新密码登录');
   } catch (e) {
     console.error(e);

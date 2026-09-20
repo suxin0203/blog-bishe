@@ -25,7 +25,7 @@
                   <n-input v-model:value="admin.username" placeholder="至少 4 个字符" @keyup.enter="login()" />
                 </n-form-item>
                 <n-form-item label="密码" path="password">
-                  <n-input v-model:value="admin.password" placeholder="请输入密码" type="password" @keyup.enter="login()" />
+                  <n-input v-model:value="admin.password" placeholder="请输入密码" type="password" show-password-on="click" @keyup.enter="login()" />
                 </n-form-item>
                 <n-form-item label="验证码" path="countresult">
                   <div class="captcha-row">
@@ -60,10 +60,10 @@
                   <n-input v-model:value="admin.username" placeholder="至少 4 个字符" @keyup.enter="register()" />
                 </n-form-item>
                 <n-form-item label="密码" path="password">
-                  <n-input v-model:value="admin.password" placeholder="至少 4 个字符" type="password" @keyup.enter="register()" />
+                  <n-input v-model:value="admin.password" placeholder="至少 4 个字符" type="password" show-password-on="click" @keyup.enter="register()" />
                 </n-form-item>
                 <n-form-item label="确认密码" path="confirmPassword">
-                  <n-input v-model:value="admin.confirmPassword" placeholder="请再次输入密码" type="password" @keyup.enter="register()" />
+                  <n-input v-model:value="admin.confirmPassword" placeholder="请再次输入密码" type="password" show-password-on="click" @keyup.enter="register()" />
                 </n-form-item>
                 <n-form-item label="邮箱" path="email">
                   <n-input v-model:value="admin.email" placeholder="用于找回密码，请填写有效邮箱" type="text" @keyup.enter="register()" />
@@ -155,10 +155,10 @@
       </div>
       <div v-else class="forgot-step">
         <n-form-item label="新密码">
-          <n-input v-model:value="forgotForm.newPassword" type="password" placeholder="至少 4 个字符" />
+          <n-input v-model:value="forgotForm.newPassword" type="password" show-password-on="click" placeholder="至少 4 个字符" />
         </n-form-item>
         <n-form-item label="确认密码">
-          <n-input v-model:value="forgotForm.confirmPassword" type="password" placeholder="再次输入新密码" />
+          <n-input v-model:value="forgotForm.confirmPassword" type="password" show-password-on="click" placeholder="再次输入新密码" />
         </n-form-item>
         <n-button type="primary" block :loading="forgotLoading" @click="doForgotReset">确认重置</n-button>
       </div>
@@ -425,8 +425,8 @@ const doForgotReset = async () => {
   const pw = forgotForm.newPassword;
   const confirm = forgotForm.confirmPassword;
   const pwTrim = pw ? String(pw).trim() : "";
-  if (pwTrim.length <= 5) {
-    message.warning("密码不能为空且须大于 5 个字符");
+  if (pwTrim.length < 4) {
+    message.warning("密码至少 4 个字符");
     return;
   }
   if (pw !== confirm) {

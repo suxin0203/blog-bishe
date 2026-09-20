@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 
 // 评论状态：0=待审核 1=已通过 2=屏蔽
 async function getListByArticleId(articleId, { status = 1 } = {}) {
@@ -14,7 +15,7 @@ async function getListByArticleId(articleId, { status = 1 } = {}) {
   `;
   const rows = await runQuery(sql, [articleId, status]);
   rows.forEach((r) => {
-    r.created_at = r.created_at?.toLocaleString?.() ?? r.created_at;
+    r.created_at = formatDateTime(r.created_at);
   });
   return rows;
 }
@@ -109,7 +110,7 @@ async function getList({ status, keyword, page = 1, pageSize = 20 } = {}) {
     runQuery(listSql, [...values, offset, Number(pageSize)]),
   ]);
   list.forEach((r) => {
-    r.created_at = r.created_at?.toLocaleString?.() ?? r.created_at;
+    r.created_at = formatDateTime(r.created_at);
   });
   return { list, total: countRow[0].total };
 }

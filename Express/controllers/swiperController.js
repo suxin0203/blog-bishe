@@ -1,4 +1,5 @@
 const swiperService = require('../services/swiperService');
+const { formatDateTime } = require('../common/utils');
 const { success, fail, error } = require('../common/response');
 
 exports.getSwiperList = async (req, res) => {
@@ -6,7 +7,7 @@ exports.getSwiperList = async (req, res) => {
     const onlyShow = req.query.all !== '1';
     const list = await swiperService.getList(onlyShow);
     list.forEach((s) => {
-      s.created_at = s.created_at?.toLocaleString?.() ?? s.created_at;
+      s.created_at = formatDateTime(s.created_at);
       // image_url 保持库里的相对路径（/upload/...）原样返回：
       // 之前在这里按请求 Host 拼绝对地址，nginx 转发不带头时 Host 是 127.0.0.1，
       // 导致线上接口返回访客无法访问的图片地址、轮播图空白。各端渲染时自行拼接 API 域名。

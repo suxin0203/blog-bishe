@@ -47,5 +47,15 @@ async function withTransaction(fn) {
   }
 }
 
+/** 时间格式化：YYYY-MM-DD HH:mm（24 小时制）；空值/无法解析的输入原样返回 */
+function formatDateTime(value) {
+  if (value == null || value === '') return value;
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 module.exports = runQuery;
 module.exports.withTransaction = withTransaction;
+module.exports.formatDateTime = formatDateTime;

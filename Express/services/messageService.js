@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 
 async function getList({ status } = {}) {
   let sql = 'SELECT m.*, u.nickname AS user_nickname FROM wz_messages m LEFT JOIN wz_users u ON u.id = m.user_id WHERE 1=1';
@@ -10,7 +11,7 @@ async function getList({ status } = {}) {
   sql += ' ORDER BY m.id DESC';
   const rows = await runQuery(sql, values);
   rows.forEach((r) => {
-    r.created_at = r.created_at?.toLocaleString?.() ?? r.created_at;
+    r.created_at = formatDateTime(r.created_at);
   });
   return rows;
 }

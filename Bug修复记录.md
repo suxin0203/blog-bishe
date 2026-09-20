@@ -200,3 +200,47 @@
 3. 微信小程序 `utils/request.js` 有改动，需要重新上传体验版/发版。
 4. ~~线上库执行迁移 SQL~~ **无需执行**：已验证线上库就是 wztest，数据修复已实时生效（详见第一节"数据修复"）。
 5. 验证：PC 首页轮播显示、安卓微信内登录页能生成小程序码、小程序登录后跨 2 小时不再掉登录、用户默认头像正常显示。
+
+---
+
+## 七、文章列表 ↔ 详情：返回丢分页、丢滚动位置（2026-09-19，体验优化专项）
+
+### 问题（用户报告）
+
+列表页翻到第 N 页后点进详情，返回时直接跳回首页；分页页码、每页条数、滚动位置全部丢失。
+
+### 根因
+
+1. `Detail.vue` 的 `goback()` 写死 `router.push("/")`——所谓"返回"实际是回首页，且详情页没有独立的返回按钮；
+2. 列表页翻页状态只存在于组件内存，URL 不携带、组件不缓存，返回即重新挂载回到第 1 页；
+3. 路由无 `scrollBehavior`，浏览器原生返回的滚动位置从未被恢复。
+
+### 方案（选型说明）
+
+采用 Vue Router 主流方案而非手动存滚动：
+
+| 需求 | 实现 |
+|------|------|
+| 分页信息不丢 | 列表页 page/pageSize **同步写入 URL query**（`router.replace`，不产生历史记录），刷新/分享/返回均可恢复 |
+| 详情返回对应分页 | 详情 URL 跳转时携带来源 `page/pageSize`；返回按钮据此 `push` 回 `/articles?page=N`，无参数时兜底第 1 页 |
+| 原生返回恢复滚动 | `scrollBehavior` 返回 `savedPosition`；配合 `App.vue` 中 `keep-alive include="ArticlePage"` 缓存列表组件，返回时内容即时完整，savedPosition 恢复精准 |
+| 自定义返回不恢复滚动 | 自定义返回按钮走 `push` 语义（非 popstate），`scrollBehavior` 落到顶部 |
+| 滚动数据不入 URL | 使用浏览器原生 savedPosition 机制，零存储 |
+
+### 改动文件
+
+| 文件 | 改动 |
+|------|------|
+| `Vue3/src/views/ArticlePage.vue` | `syncFromQuery/syncToQuery`（query ↔ 分页状态双向同步）；`toDetail` 携带 `page/pageSize`；`getArtiles` 成功后落 URL；`watch(route.query)` 处理前进/后退；新增 `export default { name: "ArticlePage" }` |
+| `Vue3/src/views/Detail.vue` | `goback()` 三级策略：有来源分页 → push 回对应页；无来源但有历史 → `router.back()`（恢复滚动）；直接打开 → 兜底列表第 1 页。新增"← 返回列表"按钮 |
+| `Vue3/src/App.vue` | `router-view` 改 v-slot 写法 + `<keep-alive include="ArticlePage">` |
+| `Vue3/src/common/router.js` | 新增 `scrollBehavior`（savedPosition 优先，其余回顶部） |
+
+### 回归验证（浏览器实测，全部通过）
+
+1. 列表翻第 2 页 → URL 变 `#/articles?page=2&pageSize=10`，首条序号 11；
+2. 滚动 600px → 进详情 → 详情 URL `#/detail?id=11&page=2&pageSize=10`；
+3. 详情页滚到 300px → 点"← 返回列表" → 回 `page=2` 页面、首条序号 11、**scrollY = 0**（自定义返回不恢复滚动 ✓）；
+4. 列表滚 600px → 进详情 → 浏览器后退 → 详情；浏览器前进 → 回列表第 2 页且 **scrollY = 600 完整恢复**（原生返回恢复滚动 ✓）；
+5. 全新标签页直接打开 `#/detail?id=3`（无历史）→ 返回 → 兜底 `#/articles?page=1`，第 1 页 10 篇 ✓；
+6. 回归项：首页进入详情返回首页不受影响（无 page 参数走 back 兜底逻辑）；AI 悬浮球、文章内容渲染正常。

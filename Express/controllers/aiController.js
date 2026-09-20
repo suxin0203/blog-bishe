@@ -3,7 +3,7 @@
 // GET  /ai/history     —— 会话回放（刷新页面恢复对话用）
 // 流式开始前的错误用统一 JSON 格式返回；开始后只能以事件形式告知
 const crypto = require('crypto');
-const { success, error } = require('../common/response');
+const { success, fail, error } = require('../common/response');
 const aiService = require('../services/aiService');
 const aiTools = require('../services/aiTools');
 const aiSessionService = require('../services/aiSessionService');
@@ -181,5 +181,60 @@ exports.history = async (req, res) => {
   } catch (e) {
     console.error('[ai] 历史查询失败:', e.message);
     return error(res, '历史查询失败');
+  }
+};
+
+// ---------- 管理端：AI 会话管理（仅超管 is_root，会话含用户提问隐私） ----------
+
+function requireRoot(req, res) {
+  if (!req.user || Number(req.user.is_root) !== 1) {
+    fail(res, '仅管理员可管理 AI 会话', 403);
+    return false;
+  }
+  return true;
+}
+
+// 会话分页列表（keyword 匹配用户名/会话ID/消息内容）
+exports.listSessions = async (req, res) => {
+  if (!requireRoot(req, res)) return;
+  try {
+    const data = await aiSessionService.listSessions({
+      page: req.query.page,
+      pageSize: req.query.pageSize,
+      keyword: String(req.query.keyword || '').trim(),
+    });
+    return success(res, data, 'ok');
+  } catch (e) {
+    console.error('[ai] 会话列表失败:', e.message);
+    return error(res, '操作错误');
+  }
+};
+
+// 查看某会话的完整对话过程
+exports.getSessionMessages = async (req, res) => {
+  if (!requireRoot(req, res)) return;
+  try {
+    const sessionId = String(req.params.id || '');
+    if (!(await aiSessionService.exists(sessionId))) {
+      return fail(res, '会话不存在', 404);
+    }
+    const messages = await aiSessionService.getAllMessages(sessionId);
+    return success(res, { sessionId, messages }, 'ok');
+  } catch (e) {
+    console.error('[ai] 会话详情失败:', e.message);
+    return error(res, '操作错误');
+  }
+};
+
+// 删除会话及其全部消息
+exports.removeSession = async (req, res) => {
+  if (!requireRoot(req, res)) return;
+  try {
+    const affected = await aiSessionService.removeSession(String(req.params.id || ''));
+    if (!affected) return fail(res, '会话不存在', 404);
+    return success(res, null, '删除成功');
+  } catch (e) {
+    console.error('[ai] 会话删除失败:', e.message);
+    return error(res, '操作错误');
   }
 };

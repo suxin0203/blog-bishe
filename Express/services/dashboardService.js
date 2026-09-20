@@ -1,4 +1,5 @@
 const runQuery = require('../common/utils');
+const { formatDateTime } = require('../common/utils');
 
 async function getStats() {
   const [userCount, articleCount, commentCount, messageCount] = await Promise.all([
@@ -27,7 +28,7 @@ async function getArticleRank({ type = 'view_count', limit = 10 } = {}) {
     [Number(limit)]
   );
   rows.forEach((r) => {
-    r.created_at = r.created_at?.toLocaleString?.() ?? r.created_at;
+    r.created_at = formatDateTime(r.created_at);
   });
   return rows;
 }

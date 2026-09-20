@@ -1,8 +1,9 @@
 const categoryService = require('../services/categoryService');
+const { formatDateTime } = require('../common/utils');
 const { success, fail, error } = require('../common/response');
 
 function formatItem(c) {
-  c.created_at = c.created_at?.toLocaleString?.() ?? c.created_at;
+  c.created_at = formatDateTime(c.created_at);
   return c;
 }
 
