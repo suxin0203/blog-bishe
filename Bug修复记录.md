@@ -175,6 +175,16 @@
 - 待办：① nginx 反代 `/ai` 需 `proxy_buffering off`（响应头已带 `X-Accel-Buffering: no`）；② 换数据库密码后删除 config.js 明文回退；③ 二期 Tool Calling / 三期 RAG。
 - 详细设计、踩坑笔记与测试记录见 `docs/AI向导-方案一设计计划.md`、`docs/工作记录-2026-09-18.md`。
 
+### 4.14 AI 向导二期（2026-09-19，功能升级）
+
+- **Tool Calling**：`services/aiTools.js` 注册 6 个工具（搜文章/分类/标签/热门排行/文章详情/站点统计），schema 与 handler 分离，复用现有 service 参数化查询，排行字段白名单映射防注入，结果截断防撑爆上下文，`executeTool` 永不 throw（错误以 `{ok:false}` 交由模型向用户解释）。
+- **控制器两轮工具循环**：模型可链式调用工具（如"有哪些 Vue 文章？讲了什么？"→ 先搜再读详情）；新增**站点数据意图守卫**——涉站点数据的问题若模型未调工具就作答，强制打回重试一次，防凭空编造；SSE 新增 `{tool}` 状态事件。
+- **会话落库**：`services/aiSessionService.js` + 迁移 `03-ai-session-stats.sql`（`wz_ai_sessions`/`wz_ai_messages`，幂等），替换一期的内存会话；登录用户自动关联 user_id；新增 `GET /ai/history` 会话回放，前端 sessionId 存 localStorage 刷新恢复。
+- **看板 AI 统计**：`GET /dashboard/token/ai-stats`（管理员）+ BlogBoard 新增"AI 向导使用统计"卡（指标 + 近 7 日趋势 + 工具调用 Top）。
+- **前端**：markdown-it 渲染 + DOMPurify 消毒；`viewport-fit=cover` 适配刘海屏。
+- **环境隔离**：本地 `.env` 指向克隆库 `wztest-ai`，线上库 `wztest` 仅需上线时执行 03 迁移（幂等）；nginx 反代 `/ai` 保持 `proxy_buffering off`。
+- 详见 `docs/AI向导-二期部署.md`（环境矩阵 + 部署步骤）。
+
 ---
 
 ## 五、验证记录
